@@ -6,6 +6,7 @@ import { ClubberAvatar, type Clubber } from './ClubberAvatar';
 import { NeonSign } from './NeonSign';
 import { ClubFxLayer } from './ClubFxLayer';
 import { EffectsMenu } from './EffectsMenu';
+import { LayoutTuner, tuned } from './LayoutTuner';
 import { canEditWelcome, type ClubRole } from '../../config/frames';
 
 export type { Clubber };
@@ -48,7 +49,7 @@ interface Props {
 
 export const ClubScene: React.FC<Props> = (p) => {
   const room = ROOMS[p.roomId];
-  const { muted, toggleMute, fx, toggleFxMenu } = useUi();
+  const { muted, toggleMute, fx, toggleFxMenu, toggleTuner, tweak, avatarSize } = useUi();
   const meIsDj = !!p.dj && p.dj.id === p.myId;
 
   const cssVars = {
@@ -75,7 +76,7 @@ export const ClubScene: React.FC<Props> = (p) => {
           color={room.signColor}
           glow={room.signGlow}
           flicker={fx.signFlicker}
-          style={{ left: LAYOUT.sign.left, top: LAYOUT.sign.top, width: LAYOUT.sign.width }}
+          style={tuned('sign', tweak)}
         />
         {/* панель действий */}
         <div className="actionbar" style={{ left: LAYOUT.actionBar.left, top: LAYOUT.actionBar.top }}>
@@ -95,6 +96,7 @@ export const ClubScene: React.FC<Props> = (p) => {
             <button className="btn-round" title="Приветствие клуба" onClick={p.onEditWelcome}>📝</button>
           )}
           <button className="btn-round" title="Свет и эффекты" onClick={toggleFxMenu}>⚙</button>
+          <button className="btn-round" title="Подгонка раскладки" onClick={toggleTuner}>📐</button>
           {p.extraButtons}
         </div>
 
@@ -127,7 +129,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         {p.dj ? (
           <div
             className="dj-slot"
-            style={{ left: LAYOUT.djSlot.left, top: LAYOUT.djSlot.top }}
+            style={tuned('djSlot', tweak)}
             onClick={() => p.onOpenProfile(p.dj!.id)}
           >
             <span className="dj-headphones">🎧</span>
@@ -136,7 +138,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         ) : (
           <div
             className="dj-slot dj-slot--empty"
-            style={{ left: LAYOUT.djSlot.left, top: LAYOUT.djSlot.top }}
+            style={tuned('djSlot', tweak)}
             onClick={p.onBecomeDj}
             title="Пульт свободен — вставай за вертушки"
           />
@@ -146,7 +148,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         {meIsDj ? (
           <button
             className="dj-button dj-button--invite"
-            style={{ left: LAYOUT.djButton.left, top: LAYOUT.djButton.top }}
+            style={tuned('djButton', tweak)}
             onClick={p.onInviteFriends}
           >
             Позвать<br />друзей
@@ -154,7 +156,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         ) : p.queuePosition === null ? (
           <button
             className="dj-button"
-            style={{ left: LAYOUT.djButton.left, top: LAYOUT.djButton.top }}
+            style={tuned('djButton', tweak)}
             onClick={p.onBecomeDj}
           >
             Стать DJ
@@ -162,7 +164,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         ) : (
           <button
             className="dj-button dj-button--queue"
-            style={{ left: LAYOUT.djButton.left, top: LAYOUT.djButton.top }}
+            style={tuned('djButton', tweak)}
             onClick={p.onQueue}
           >
             <span className="dj-button__bolt" onClick={(e) => { e.stopPropagation(); p.onQueue(); }}>⚡</span>
@@ -171,7 +173,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         )}
 
         {p.floorGift && (
-          <div className="gift-on-floor" style={{ left: LAYOUT.giftSpot.left, top: LAYOUT.giftSpot.top }}>
+          <div className="gift-on-floor" style={tuned('giftSpot', tweak)}>
             {p.floorGift}
           </div>
         )}
@@ -180,10 +182,9 @@ export const ClubScene: React.FC<Props> = (p) => {
         <div
           className={'floor' + (fx.dance ? '' : ' floor--static')}
           style={{
-            left: LAYOUT.danceFloor.left,
-            top: LAYOUT.danceFloor.top,
-            width: LAYOUT.danceFloor.width,
+            ...tuned('danceFloor', tweak),
             height: LAYOUT.danceFloor.height,
+            ['--avatar-size' as any]: `${avatarSize}px`,
           }}
         >
           {p.crowd.slice(0, CROWD_SLOTS.length).map((c, i) => (
@@ -202,6 +203,7 @@ export const ClubScene: React.FC<Props> = (p) => {
 
         {p.overlay}
         <EffectsMenu />
+        <LayoutTuner />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { TunableKey } from '../config/clubTheme';
 
 export type ModalId = 'gift' | 'queue' | 'trackResult' | 'clubGroup' | 'help' | 'shop' | null;
 
@@ -45,11 +46,17 @@ const FX_DEFAULT: FxSettings = {
   dance: true,
 };
 
+/** Поправки к раскладке, которые крутятся прямо в игре. */
+export type LayoutTweak = Partial<Record<TunableKey, { x?: number; y?: number; w?: number }>>;
+
 interface UiState {
   modal: ModalId;
   muted: boolean;
   fx: FxSettings;
   fxMenuOpen: boolean;
+  tunerOpen: boolean;
+  tweak: LayoutTweak;
+  avatarSize: number;
   lastResult: null | {
     artist: string;
     title: string;
@@ -65,6 +72,10 @@ interface UiState {
   toggleFx: (key: keyof FxSettings) => void;
   setAllFx: (on: boolean) => void;
   toggleFxMenu: () => void;
+  toggleTuner: () => void;
+  setTweak: (key: TunableKey, patch: { x?: number; y?: number; w?: number }) => void;
+  resetTweak: () => void;
+  setAvatarSize: (px: number) => void;
   showResult: (r: UiState['lastResult']) => void;
 }
 
@@ -75,6 +86,9 @@ export const useUi = create<UiState>()(
       muted: false,
       fx: FX_DEFAULT,
       fxMenuOpen: false,
+      tunerOpen: false,
+      tweak: {},
+      avatarSize: 70,
       lastResult: null,
       open: (m) => set({ modal: m }),
       close: () => set({ modal: null }),
@@ -87,12 +101,17 @@ export const useUi = create<UiState>()(
           ) as unknown as FxSettings,
         })),
       toggleFxMenu: () => set((s) => ({ fxMenuOpen: !s.fxMenuOpen })),
+      toggleTuner: () => set((s) => ({ tunerOpen: !s.tunerOpen })),
+      setTweak: (key, patch) =>
+        set((s) => ({ tweak: { ...s.tweak, [key]: { ...s.tweak[key], ...patch } } })),
+      resetTweak: () => set({ tweak: {}, avatarSize: 70 }),
+      setAvatarSize: (px) => set({ avatarSize: px }),
       showResult: (r) => set({ lastResult: r, modal: 'trackResult' }),
     }),
     {
       name: 'club-ui',
       // между сессиями храним только настройки света и звука
-      partialize: (s) => ({ fx: s.fx, muted: s.muted }),
+      partialize: (s) => ({ fx: s.fx, muted: s.muted, tweak: s.tweak, avatarSize: s.avatarSize }),
     },
   ),
 );

@@ -46,12 +46,25 @@ export const LAYOUT = {
   giftSpot:  { left: '35%', top: '72%' },
   decorSlot: { right: '9%', top: '30%' },
   /** танцпол перед сценой */
-  danceFloor:{ left: '2%', top: '80%', width: '96%', height: '20%' },
+  danceFloor:{ left: '2%', top: '70%', width: '96%', height: '30%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
 export const CROWD_SLOTS = [
-  { x: 7,  y: 42 }, { x: 20, y: 66 }, { x: 33, y: 34 }, { x: 46, y: 62 },
-  { x: 59, y: 36 }, { x: 72, y: 66 }, { x: 85, y: 38 }, { x: 95, y: 64 },
-  { x: 14, y: 14 }, { x: 40, y: 12 }, { x: 66, y: 12 }, { x: 90, y: 12 },
+  { x: 8,  y: 55 }, { x: 21, y: 78 }, { x: 34, y: 52 }, { x: 47, y: 80 },
+  { x: 60, y: 54 }, { x: 73, y: 80 }, { x: 86, y: 54 }, { x: 95, y: 78 },
+  { x: 14, y: 30 }, { x: 40, y: 28 }, { x: 66, y: 28 }, { x: 90, y: 30 },
 ];
+
+/** Ключи, которые можно двигать в режиме настройки раскладки. */
+export const TUNABLE = ['sign', 'player', 'djSlot', 'djButton', 'danceFloor', 'giftSpot'] as const;
+export type TunableKey = typeof TUNABLE[number];
+
+export const TUNABLE_LABELS: Record<TunableKey, string> = {
+  sign: 'Вывеска',
+  player: 'Окно трека',
+  djSlot: 'Диджей',
+  djButton: 'Кнопка «Стать DJ»',
+  danceFloor: 'Танцпол',
+  giftSpot: 'Угощение',
+};
