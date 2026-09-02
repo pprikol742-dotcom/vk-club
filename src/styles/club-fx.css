@@ -1,0 +1,143 @@
+/* Оживление зала. Подключать после club-frames.css */
+
+.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 6; overflow: hidden; }
+
+/* ---------- неоновая вывеска ---------- */
+.neon-sign {
+  position: absolute; z-index: 8; transform: translate(-50%, -50%);
+  display: grid; place-items: center; padding: 8px 18px; border-radius: 6px;
+  border: 2px solid var(--sign-color);
+  box-shadow: 0 0 12px var(--sign-glow), inset 0 0 12px var(--sign-glow);
+  background: rgba(10,4,18,.28);
+  text-align: center;
+}
+.neon-sign__text {
+  color: #fff; font-weight: 800; letter-spacing: 1px; line-height: 1.15;
+  text-shadow:
+    0 0 6px var(--sign-color),
+    0 0 14px var(--sign-glow),
+    0 0 26px var(--sign-glow);
+  word-break: break-word;
+}
+.neon-sign--flicker { animation: signFlicker 5.5s infinite; }
+@keyframes signFlicker {
+  0%, 92%, 100% { opacity: 1 }
+  93% { opacity: .45 }
+  94% { opacity: 1 }
+  96% { opacity: .55 }
+  97% { opacity: 1 }
+}
+
+/* ---------- зеркальный шар ---------- */
+.fx-ball {
+  position: absolute; width: 46px; height: 46px; transform: translate(-50%,-50%);
+  border-radius: 50%; overflow: hidden;
+  background:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,.35) 0 6deg, rgba(120,90,160,.25) 6deg 12deg),
+    radial-gradient(circle at 35% 30%, #fff, #6b5a86 70%);
+  animation: ballSpin 6s linear infinite;
+  box-shadow: 0 0 18px rgba(255,255,255,.35);
+}
+.fx-ball__shine {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.85), transparent 45%);
+}
+@keyframes ballSpin { to { transform: translate(-50%,-50%) rotate(360deg) } }
+
+/* ---------- лучи ---------- */
+.fx-beams { position: absolute; transform: translate(-50%,-50%); }
+.fx-beam {
+  position: absolute; left: 0; top: 0; width: 60px; height: 220px;
+  transform-origin: 50% 0;
+  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  filter: blur(2px); opacity: .5;
+  animation: beamSway 7s ease-in-out infinite;
+}
+.fx-beam--cyan   { background: linear-gradient(180deg, rgba(0,229,255,.75), transparent); animation-delay: 0s;   }
+.fx-beam--green  { background: linear-gradient(180deg, rgba(80,255,150,.7), transparent);  animation-delay: -1.7s; }
+.fx-beam--pink   { background: linear-gradient(180deg, rgba(255,62,200,.75), transparent); animation-delay: -3.4s; }
+.fx-beam--violet { background: linear-gradient(180deg, rgba(170,90,255,.7), transparent);  animation-delay: -5.1s; }
+@keyframes beamSway {
+  0%,100% { transform: translate(-50%,0) rotate(-34deg) }
+  50%     { transform: translate(-50%,0) rotate(34deg) }
+}
+
+/* ---------- дым ---------- */
+.fx-smoke { position: absolute; left: 0; right: 0; top: 46%; height: 34%; }
+.fx-smoke__puff {
+  position: absolute; bottom: 0; width: 220px; height: 120px; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(220,210,255,.16), transparent 70%);
+  filter: blur(8px);
+  animation: smokeDrift 16s ease-in-out infinite;
+}
+.fx-smoke__puff--1 { left: 8%;  animation-delay: 0s;    }
+.fx-smoke__puff--2 { left: 38%; animation-delay: -6s;   }
+.fx-smoke__puff--3 { left: 66%; animation-delay: -11s;  }
+@keyframes smokeDrift {
+  0%,100% { transform: translate(0,0) scale(1);      opacity: .5 }
+  50%     { transform: translate(30px,-14px) scale(1.25); opacity: .8 }
+}
+
+/* ---------- гирлянда по краю сцены ---------- */
+.fx-bulbs {
+  position: absolute; left: 33%; right: 33%; top: 68.5%; height: 6px;
+  background-image: radial-gradient(circle, rgba(255,214,140,.95) 0 2px, transparent 2.5px);
+  background-size: 14px 6px; background-repeat: repeat-x;
+  filter: drop-shadow(0 0 4px rgba(255,190,90,.9));
+  animation: bulbsBlink 1.6s steps(2) infinite;
+}
+@keyframes bulbsBlink { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+
+/* ---------- неон на стенах ---------- */
+.fx-wall {
+  position: absolute; top: 18%; width: 26%; height: 34%;
+  background: radial-gradient(ellipse at center, rgba(255,62,200,.20), transparent 68%);
+  animation: wallPulse 3.4s ease-in-out infinite;
+}
+.fx-wall--left  { left: 0; }
+.fx-wall--right { right: 0; animation-delay: -1.7s;
+  background: radial-gradient(ellipse at center, rgba(0,229,255,.18), transparent 68%); }
+@keyframes wallPulse { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
+
+/* ---------- блики на полу ---------- */
+.fx-floor {
+  position: absolute; left: 12%; right: 12%; top: 76%; height: 20%;
+  background:
+    radial-gradient(ellipse at 25% 40%, rgba(0,229,255,.18), transparent 60%),
+    radial-gradient(ellipse at 72% 55%, rgba(255,62,200,.18), transparent 60%);
+  filter: blur(6px);
+  animation: floorShift 9s ease-in-out infinite alternate;
+}
+@keyframes floorShift { from { transform: translateX(-16px) } to { transform: translateX(16px) } }
+
+/* эффекты не мешают тем, кому от них плохо */
+@media (prefers-reduced-motion: reduce) {
+  .neon-sign--flicker, .fx-ball, .fx-beam, .fx-smoke__puff,
+  .fx-bulbs, .fx-wall, .fx-floor { animation: none !important; }
+}
+
+/* ---------- меню эффектов ---------- */
+.fx-menu {
+  position: absolute; left: 1.5%; top: 12%; z-index: 60; width: 210px;
+  padding: 10px 12px 12px; border-radius: 12px;
+  background: rgba(22,14,38,.95); border: 1px solid rgba(255,255,255,.15);
+  box-shadow: 0 14px 34px rgba(0,0,0,.6); font-size: 13px;
+}
+.fx-menu__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; font-weight: 700; color: var(--text);
+}
+.fx-menu__close { border: 0; background: none; color: var(--text-dim); font-size: 15px; cursor: pointer; }
+.fx-menu__row {
+  display: flex; align-items: center; gap: 8px; padding: 5px 0;
+  color: var(--text); cursor: pointer;
+}
+.fx-menu__row input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.fx-menu__all {
+  margin-top: 8px; width: 100%; height: 30px; border: 0; border-radius: 15px;
+  background: linear-gradient(180deg, #b44cff, #7d1bc7); color: #fff;
+  font-size: 12px; cursor: pointer;
+}
+
+/* танцующие аватарки можно остановить */
+.floor--static .clubber-slot { animation: none; }

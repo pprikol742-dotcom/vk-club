@@ -16,11 +16,14 @@ import { inviteFriends } from '../../lib/vkClub';
 import '../../styles/club.css';
 import '../../styles/club-extra.css';
 import '../../styles/club-frames.css';
+import '../../styles/club-fx.css';
 
 interface Props {
   roomId: RoomId;
   clubId: string;
   clubName: string;
+  /** что горит на вывеске: имя паблика владельца */
+  signText?: string;
   clubGroupId: number;
   isGroupMember: boolean;
   /** приветствие клуба — падает в чат каждому входящему */
@@ -118,6 +121,7 @@ export const ClubPage: React.FC<Props> = (p) => {
       <div ref={stageRef} style={{ display: 'contents' }}>
         <ClubScene
           roomId={p.roomId}
+          signText={p.signText ?? p.clubName}
           myId={p.myId}
           myRole={p.myRole}
           coins={p.coins}

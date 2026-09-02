@@ -16,8 +16,10 @@ import type { ChatMessage as UiMessage } from "../../components/club/ChatPanel";
 import type { GiftItem } from "../../components/modals/ClubModals";
 import type { ClubberProfile } from "../../components/modals/ProfileModal";
 import { genderFromVk, type ClubRole } from "../../config/frames";
+import { useClubMusic } from "./useClubMusic";
 
 const APP_URL = "https://vk.com/app54737632";
+const APP_ID = 54737632;
 
 /** Подарки клабберу и диджею — иконки берём из твоего giftIcons. */
 const withIcons = (list: Array<{ id: string; name: string; price: number }>): GiftItem[] =>
@@ -46,7 +48,8 @@ const DJ_GIFTS = withIcons([
 
 type SideModal = "hands" | "decorate" | "leaderboard" | null;
 
-export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
+export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
+  const leaveClub = onLeaveClub ?? (() => useAppStore.setState({ club: null } as any));
   const profile = useAppStore((s) => s.profile);
   const club = useAppStore((s) => s.club);
   const session = useAppStore((s) => s.session);
@@ -84,14 +87,26 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
   );
 
   const { toggleMyLightShow, occupants } = useClubRealtime(club?.id ?? null, me);
+  const { position: musicPosition, unlock: unlockAudio } = useClubMusic(APP_ID, session as any);
 
   /* ---------- бан и приветствие ---------- */
   useEffect(() => {
     if (!club || !profile) return;
-    supabase
-      .rpc("is_banned_vk", { p_club: club.id, p_vk_id: profile.vk_id })
-      .then(({ data }) => setBanned(Boolean(data)))
-      .catch(() => setBanned(false));
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.rpc("is_banned_vk", {
+          p_club: club.id,
+          p_vk_id: profile.vk_id,
+        });
+        if (!cancelled) setBanned(Boolean(data));
+      } catch {
+        if (!cancelled) setBanned(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [club, profile]);
 
   useEffect(() => {
@@ -133,13 +148,13 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
     return {
       artist: session.track_artist ?? "",
       title: session.track_title ?? "",
-      position: (session as any).position ?? 0,
-      duration: (session as any).duration ?? 0,
+      position: musicPosition,
+      duration: (session as any).track_duration ?? (session as any).duration ?? 0,
       likes: session.likes ?? 0,
       dislikes: session.dislikes ?? 0,
       gifts: (session as any).gifts ?? 0,
     };
-  }, [session]);
+  }, [session, musicPosition]);
 
   const messages: UiMessage[] = useMemo(() => {
     const nameOf = (vkId: number) =>
@@ -272,13 +287,18 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
   const buyout = useCallback(
     async (userId: string) => {
       if (!club) return;
-      const { error } = await supabase.rpc("buyout_vk", {
-        p_club: club.id,
-        p_target_vk: Number(userId),
-      });
-      if (error) alert(error.message);
+      try {
+        const res = await callEdgeFunction<{ spent: number }>("harem-buyout", {
+          launchParams: getLaunchParams(),
+          club_id: club.id,
+          target_vk_id: Number(userId),
+        });
+        addCoins(-(res?.spent ?? 0));
+      } catch (e) {
+        alert((e as Error).message);
+      }
     },
-    [club],
+    [club, addCoins],
   );
 
   const saveWelcome = useCallback(
@@ -304,11 +324,12 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
   const isDj = djVkId === profile.vk_id;
 
   return (
-    <>
+    <div onPointerDown={unlockAudio}>
       <ClubPage
         roomId="neon"
         clubId={club.id}
         clubName={club.name}
+        signText={(club as any).group_name ?? club.name}
         clubGroupId={(club as any).vk_group_id ?? 0}
         isGroupMember={Boolean((club as any).is_member)}
         welcomeText={welcome}
@@ -331,7 +352,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
         djGifts={DJ_GIFTS}
         playerGifts={PLAYER_GIFTS}
         giftBusy={giftBusy}
-        onExit={onLeaveClub}
+        onExit={leaveClub}
         onBecomeDj={() => djAction("join")}
         onVote={() => {}}
         onSendGift={sendGift}
@@ -347,7 +368,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
         onBan={banUser}
         onSaveWelcome={saveWelcome}
         onSubscribeEmoji={() => {}}
-        onChooseAnotherClub={onLeaveClub}
+        onChooseAnotherClub={leaveClub}
         extraButtons={
           <>
             <button
@@ -388,6 +409,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub: () => void }) {
       {sideModal === "leaderboard" && (
         <LeaderboardModal clubId={club.id} onClose={() => setSideModal(null)} />
       )}
-    </>
+    </div>
   );
 }

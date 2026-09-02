@@ -3,12 +3,17 @@ import { ROOMS, LAYOUT, CROWD_SLOTS, type RoomId } from '../../config/clubTheme'
 import { useUi } from '../../store/uiStore';
 import { TrackPlayer, type TrackState } from './TrackPlayer';
 import { ClubberAvatar, type Clubber } from './ClubberAvatar';
+import { NeonSign } from './NeonSign';
+import { ClubFxLayer } from './ClubFxLayer';
+import { EffectsMenu } from './EffectsMenu';
 import { canEditWelcome, type ClubRole } from '../../config/frames';
 
 export type { Clubber };
 
 interface Props {
   roomId: RoomId;
+  /** название сообщества владельца — горит на вывеске */
+  signText: string;
   myId: string;
   myRole: ClubRole;
   coins: number;
@@ -43,7 +48,7 @@ interface Props {
 
 export const ClubScene: React.FC<Props> = (p) => {
   const room = ROOMS[p.roomId];
-  const { muted, toggleMute } = useUi();
+  const { muted, toggleMute, fx, toggleFxMenu } = useUi();
   const meIsDj = !!p.dj && p.dj.id === p.myId;
 
   const cssVars = {
@@ -63,6 +68,15 @@ export const ClubScene: React.FC<Props> = (p) => {
       </div>
 
       <div className="stage" style={{ backgroundImage: `url(${room.background})` }}>
+        <ClubFxLayer fx={fx} />
+
+        <NeonSign
+          text={p.signText}
+          color={room.signColor}
+          glow={room.signGlow}
+          flicker={fx.signFlicker}
+          style={{ left: LAYOUT.sign.left, top: LAYOUT.sign.top, width: LAYOUT.sign.width }}
+        />
         {/* панель действий */}
         <div className="actionbar" style={{ left: LAYOUT.actionBar.left, top: LAYOUT.actionBar.top }}>
           <button className="btn-exit" onClick={p.onExit}>🚪 ВЫХОД</button>
@@ -80,6 +94,7 @@ export const ClubScene: React.FC<Props> = (p) => {
           {canEditWelcome(p.myRole) && (
             <button className="btn-round" title="Приветствие клуба" onClick={p.onEditWelcome}>📝</button>
           )}
+          <button className="btn-round" title="Свет и эффекты" onClick={toggleFxMenu}>⚙</button>
           {p.extraButtons}
         </div>
 
@@ -163,7 +178,7 @@ export const ClubScene: React.FC<Props> = (p) => {
 
         {/* танцпол */}
         <div
-          className="floor"
+          className={'floor' + (fx.dance ? '' : ' floor--static')}
           style={{
             left: LAYOUT.danceFloor.left,
             top: LAYOUT.danceFloor.top,
@@ -186,6 +201,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         </div>
 
         {p.overlay}
+        <EffectsMenu />
       </div>
     </div>
   );

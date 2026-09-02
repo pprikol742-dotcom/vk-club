@@ -1,78 +1,59 @@
-// Темы клубов. Фон — то самое сгенерированное изображение.
-// Кладём файлы в public/assets/rooms/ и меняем путь здесь.
+// Темы клубов и раскладка под фон public/assets/bg/club_background.png (807×398).
 
 export type RoomId = 'neon' | 'disco8090' | 'dance' | 'ivetta';
 
 export interface RoomTheme {
   id: RoomId;
   title: string;
-  /** фон сцены (полное изображение комнаты: стены, пол, колонки, пульт) */
   background: string;
-  /** цвет неоновой подсветки для свечения UI-элементов */
+  /** основной неон комнаты */
   neon: string;
   neonSoft: string;
-  /** цвет вывески на стене (если рисуем текстом, а не на картинке) */
+  /** цвет вывески с названием клуба */
   signColor: string;
+  signGlow: string;
 }
 
+// На GitHub Pages сайт живёт в подпапке /vk-club/, поэтому путь строим от BASE_URL.
+const BG = `${import.meta.env.BASE_URL}assets/bg/club_background.png`;
+
 export const ROOMS: Record<RoomId, RoomTheme> = {
-  neon: {
-    id: 'neon',
-    title: 'В Клубе',
-    background: '/assets/rooms/club-neon.png', // <-- наш сгенерированный фон
-    neon: '#c14bff',
-    neonSoft: 'rgba(193,75,255,.45)',
-    signColor: '#ff6ad5',
-  },
-  disco8090: {
-    id: 'disco8090',
-    title: 'ДИСКО ХИТЫ 80-90',
-    background: '/assets/rooms/club-disco.png',
-    neon: '#b04cff',
-    neonSoft: 'rgba(176,76,255,.45)',
-    signColor: '#e9a6ff',
-  },
-  dance: {
-    id: 'dance',
-    title: 'Dance Music Only',
-    background: '/assets/rooms/club-dance.png',
-    neon: '#00d8ff',
-    neonSoft: 'rgba(0,216,255,.4)',
-    signColor: '#9be8ff',
-  },
-  ivetta: {
-    id: 'ivetta',
-    title: 'Ivetta Club',
-    background: '/assets/rooms/club-ivetta.png',
-    neon: '#ff4bd8',
-    neonSoft: 'rgba(255,75,216,.45)',
-    signColor: '#ff9de2',
-  },
+  neon:      { id: 'neon',      title: 'В Клубе',            background: BG, neon: '#c14bff', neonSoft: 'rgba(193,75,255,.45)', signColor: '#ff3ec8', signGlow: 'rgba(255,62,200,.85)' },
+  disco8090: { id: 'disco8090', title: 'ДИСКО ХИТЫ 80-90',   background: BG, neon: '#b04cff', neonSoft: 'rgba(176,76,255,.45)', signColor: '#ff6ad5', signGlow: 'rgba(255,106,213,.8)' },
+  dance:     { id: 'dance',     title: 'Dance Music Only',   background: BG, neon: '#00d8ff', neonSoft: 'rgba(0,216,255,.40)',  signColor: '#4de2ff', signGlow: 'rgba(77,226,255,.8)' },
+  ivetta:    { id: 'ivetta',    title: 'Ivetta Club',        background: BG, neon: '#ff4bd8', neonSoft: 'rgba(255,75,216,.45)', signColor: '#ff8ae0', signGlow: 'rgba(255,138,224,.8)' },
 };
 
-/**
- * Раскладка сцены в процентах от контейнера — фон масштабируется,
- * элементы едут вместе с ним на любом экране.
- */
+/** Всё в процентах от сцены — раскладка едет вместе с фоном на любом экране. */
 export const LAYOUT = {
-  /** пропорция комнаты (ширина/высота) — под наш фон */
-  aspect: 565 / 545,
+  /** пропорция фона зала */
+  aspect: 807 / 398,
 
-  actionBar: { left: '2%', top: '3%' },       // ВЫХОД + иконки
-  coins: { right: '5%', top: '4%' },           // монеты
-  topBadge: { right: '0%', top: '2%' },        // ТОП КЛУБА
-  player: { left: '13%', top: '22%', width: '58%' }, // окно трека
-  djSlot: { left: '50%', top: '43%' },         // аватар DJ за пультом
-  djButton: { left: '31%', top: '44%' },       // "Стать DJ" / "Ты 1"
-  danceFloor: { left: '2%', top: '60%', width: '96%', height: '38%' },
-  giftSpot: { left: '33%', top: '52%' },       // угощение возле пульта
-  decorSlot: { right: '10%', top: '25%' },     // гитара/декор на стене
+  actionBar: { left: '1.5%', top: '3%' },
+  coins:     { right: '4%',  top: '4%' },
+  topBadge:  { right: '0%',  top: '2%' },
+
+  /** неоновая вывеска с названием паблика — над сценой */
+  sign:      { left: '50%', top: '15%', width: '44%' },
+  /** зеркальный шар */
+  discoBall: { left: '49.5%', top: '38%' },
+  /** окно трека */
+  player:    { left: '24%', top: '33%', width: '52%' },
+  /** диджей за пультом */
+  djSlot:    { left: '50%', top: '55%' },
+  djButton:  { left: '26%', top: '57%' },
+  /** угощение возле пульта */
+  giftSpot:  { left: '36%', top: '66%' },
+  /** декор на стене */
+  decorSlot: { right: '11%', top: '20%' },
+  /** танцпол */
+  danceFloor:{ left: '2%', top: '74%', width: '96%', height: '24%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
 export const CROWD_SLOTS = [
-  { x: 4, y: 46 }, { x: 14, y: 62 }, { x: 24, y: 30 }, { x: 34, y: 58 },
-  { x: 44, y: 22 }, { x: 52, y: 66 }, { x: 62, y: 34 }, { x: 72, y: 60 },
-  { x: 80, y: 24 }, { x: 88, y: 54 }, { x: 18, y: 12 }, { x: 58, y: 8 },
-  { x: 30, y: 84 }, { x: 66, y: 86 }, { x: 8, y: 22 }, { x: 92, y: 82 },
+  { x: 6, y: 40 },  { x: 16, y: 70 }, { x: 26, y: 28 }, { x: 36, y: 62 },
+  { x: 46, y: 34 }, { x: 56, y: 72 }, { x: 66, y: 30 }, { x: 76, y: 64 },
+  { x: 86, y: 36 }, { x: 94, y: 70 }, { x: 11, y: 12 }, { x: 31, y: 92 },
+  { x: 51, y: 10 }, { x: 71, y: 94 }, { x: 91, y: 12 }, { x: 41, y: 8 },
 ];
