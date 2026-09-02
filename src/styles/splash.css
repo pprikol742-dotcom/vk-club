@@ -1,0 +1,109 @@
+.splash {
+  position: fixed; inset: 0; z-index: 200;
+  background-color: #08060f;
+  background-size: cover;          /* заполняем экран, пропорции не ломаем */
+  background-position: 38% 45%;    /* вход в клуб и очередь остаются в кадре */
+  background-repeat: no-repeat;
+  display: flex; align-items: flex-end; justify-content: center;
+  font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* затемнение снизу, чтобы полоса читалась на любой картинке */
+.splash__veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(8,6,15,.15) 0%, rgba(8,6,15,0) 35%, rgba(8,6,15,.85) 100%);
+}
+
+/* неоновый логотип игры */
+.splash__logo {
+  position: absolute; left: 50%; top: 26%; z-index: 3;
+  transform: translate(-50%, -50%);
+  padding: 10px 26px; border-radius: 8px;
+  border: 3px solid #ff3ec8;
+  background: rgba(12,6,20,.45);
+  box-shadow: 0 0 18px rgba(255,62,200,.9), inset 0 0 18px rgba(255,62,200,.55);
+  animation: logoFlicker 6s infinite;
+}
+.splash__logo-text {
+  font-size: clamp(28px, 7vw, 54px); font-weight: 900; letter-spacing: 2px;
+  color: #fff; white-space: nowrap;
+  text-shadow: 0 0 8px #ff3ec8, 0 0 20px rgba(255,62,200,.9), 0 0 40px rgba(255,62,200,.6);
+}
+@keyframes logoFlicker {
+  0%, 90%, 100% { opacity: 1 }
+  92% { opacity: .5 }
+  93% { opacity: 1 }
+  95% { opacity: .6 }
+  96% { opacity: 1 }
+}
+
+/* «Ставь 5!» */
+.splash__rate {
+  position: absolute; left: 16px; top: 16px; z-index: 2;
+  width: 76px; height: 76px; border-radius: 50%;
+  display: grid; place-content: center; gap: 2px; text-align: center;
+  background: radial-gradient(circle at 50% 40%, #ff2fa8, #b3006b);
+  border: 2px solid #ffd84d; color: #fff; font-size: 13px; font-weight: 800;
+  box-shadow: 0 0 18px rgba(255,47,168,.8);
+  animation: ratePulse 2.4s ease-in-out infinite;
+}
+.splash__rate span { display: block; font-size: 10px; letter-spacing: 1px; color: #ffe27a; }
+@keyframes ratePulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.06) } }
+
+/* летящие лайки */
+.splash__likes { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.splash__like {
+  position: absolute; bottom: -40px; font-size: 22px; opacity: 0;
+  animation: likeFly 6s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(255,190,60,.55));
+}
+.splash__like--1 { left: 12%; animation-delay: 0s;    font-size: 18px }
+.splash__like--2 { left: 24%; animation-delay: -1.2s; }
+.splash__like--3 { left: 36%; animation-delay: -2.4s; font-size: 26px }
+.splash__like--4 { left: 48%; animation-delay: -3.6s; }
+.splash__like--5 { left: 60%; animation-delay: -0.6s; font-size: 20px }
+.splash__like--6 { left: 72%; animation-delay: -1.8s; }
+.splash__like--7 { left: 84%; animation-delay: -3.0s; font-size: 24px }
+.splash__like--8 { left: 18%; animation-delay: -4.2s; }
+.splash__like--9 { left: 66%; animation-delay: -5.0s; font-size: 17px }
+@keyframes likeFly {
+  0%   { transform: translateY(0) rotate(-8deg);      opacity: 0 }
+  12%  { opacity: .9 }
+  80%  { opacity: .55 }
+  100% { transform: translateY(-92vh) rotate(10deg);  opacity: 0 }
+}
+
+/* низ: полоса и подпись */
+.splash__bottom {
+  position: relative; z-index: 3; width: min(420px, 76vw);
+  margin-bottom: max(38px, env(safe-area-inset-bottom));
+  text-align: center;
+}
+.splash__bar {
+  height: 10px; border-radius: 6px; overflow: hidden;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28);
+}
+.splash__bar-fill {
+  height: 100%; width: 0;
+  background: linear-gradient(90deg, #4de2ff, #ff3ec8);
+  transition: width .3s ease;
+}
+.splash__bar-fill.is-auto { width: 40%; animation: barSlide 1.5s ease-in-out infinite; }
+@keyframes barSlide {
+  0%   { margin-left: -40%; width: 40% }
+  100% { margin-left: 100%;  width: 40% }
+}
+.splash__msg { margin-top: 10px; font-size: 12px; color: rgba(255,255,255,.7); }
+.splash__error { font-size: 13px; color: #ff9d9d; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .splash__like, .splash__rate, .splash__logo, .splash__bar-fill.is-auto { animation: none }
+}
+
+/* на узком экране кадр смещаем к входу в клуб */
+@media (max-aspect-ratio: 3/4) {
+  .splash { background-position: 30% 42%; }
+  .splash__logo { top: 22%; padding: 8px 18px; }
+  .splash__rate { width: 62px; height: 62px; font-size: 11px; }
+}

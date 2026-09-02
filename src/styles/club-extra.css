@@ -136,3 +136,12 @@
   font-size: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.5);
 }
 .chat { position: relative; }
+
+/* пустое состояние витрины клубов */
+.clublist-empty {
+  min-height: 100vh; display: grid; place-content: center; gap: 14px; justify-items: center;
+  background: var(--bg-app); color: var(--text-dim); font-size: 14px; text-align: center;
+  padding: 20px;
+}
+/* аватарка клуба не должна расплываться */
+.club-card__cover img { background: #1a1526; }
