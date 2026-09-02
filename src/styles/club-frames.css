@@ -1,0 +1,78 @@
+/* Рамки, ховер-действия, приветствие, экран бана. Подключать после club-extra.css */
+
+/* ---------- цвета рамок ---------- */
+:root {
+  --frame-owner:  #ffc419;   /* хозяин / админ */
+  --frame-leader: #ff3b3b;   /* лидер ТОПа недели */
+  --frame-female: #d96cff;   /* женщины */
+  --frame-male:   #3ddc84;   /* мужчины */
+}
+
+.clubber--owner  { border-color: var(--frame-owner)  !important; box-shadow: 0 6px 10px rgba(0,0,0,.45), 0 0 12px rgba(255,196,25,.75) !important; }
+.clubber--leader { border-color: var(--frame-leader) !important; box-shadow: 0 6px 10px rgba(0,0,0,.45), 0 0 12px rgba(255,59,59,.7) !important; }
+.clubber--female { border-color: var(--frame-female) !important; box-shadow: 0 6px 10px rgba(0,0,0,.45), 0 0 12px rgba(217,108,255,.6) !important; }
+.clubber--male   { border-color: var(--frame-male)   !important; box-shadow: 0 6px 10px rgba(0,0,0,.45), 0 0 12px rgba(61,220,132,.55) !important; }
+
+.profile__photo.clubber--owner,
+.profile__photo.clubber--leader,
+.profile__photo.clubber--female,
+.profile__photo.clubber--male { border: 3px solid; }
+
+/* ---------- действия на аватаре ---------- */
+.clubber-slot .clubber { border-width: 2px; border-style: solid; cursor: pointer; }
+.clubber__actions {
+  position: absolute; left: 50%; top: -18px; transform: translateX(-50%);
+  display: flex; gap: 4px; opacity: 0; pointer-events: none; transition: opacity .12s;
+  z-index: 3;
+}
+.clubber-slot:hover .clubber__actions,
+.clubber-slot.is-open .clubber__actions { opacity: 1; pointer-events: auto; }
+.clubber__act {
+  width: 24px; height: 24px; border: 0; border-radius: 50%;
+  background: rgba(20,16,32,.92); border: 1px solid rgba(255,255,255,.25);
+  color: #fff; font-size: 12px; cursor: pointer; display: grid; place-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.clubber__act:hover { background: var(--accent); }
+/* корона не должна перекрываться иконками */
+.clubber-slot:hover .clubber__crown,
+.clubber-slot.is-open .clubber__crown { opacity: 0; }
+
+/* ---------- пустой пульт и пустой плеер ---------- */
+.dj-slot--empty {
+  width: 56px; height: 62px; border-radius: 6px; cursor: pointer;
+  border: 2px dashed rgba(255,255,255,.55);
+  background: rgba(255,255,255,.06);
+  animation: emptyPulse 1.8s ease-in-out infinite;
+}
+@keyframes emptyPulse { 0%,100% { opacity: .5 } 50% { opacity: .9 } }
+.player--empty .player__body { background: linear-gradient(180deg, #5a4436, #3f2f25); }
+.player__idle { height: 40px; border-radius: 4px; background: rgba(0,0,0,.18); }
+.player--empty .player__vote { filter: grayscale(.35); }
+
+.dj-button--invite {
+  background: linear-gradient(180deg, #ff9d3c, #e2701a); color: #fff; font-weight: 600;
+  line-height: 1.1; height: auto; padding: 5px 12px; text-align: center;
+}
+
+/* ---------- приветствие клуба ---------- */
+.welcome__hint { margin: 0 0 14px; text-align: center; color: #9fe4e8; font-size: 13px; line-height: 1.4; }
+.welcome__area {
+  width: 100%; min-height: 110px; resize: vertical; padding: 10px 12px;
+  border: 0; border-radius: 6px; background: #fff; color: #1c1830;
+  font-size: 13px; font-family: inherit; outline: none;
+}
+.welcome__counter { margin: 6px 0 14px; text-align: right; font-size: 11px; color: var(--text-dim); }
+
+/* ---------- экран блокировки ---------- */
+.blocked-page {
+  position: relative; min-height: 100vh; padding-top: 30px;
+  background: var(--bg-app); color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+}
+.blocked-card { width: min(480px, 92vw); }
+.blocked-card .modal__text { line-height: 1.6; }
+
+/* иконка-картинка в сетке подарков */
+.gift__icon { width: 34px; height: 34px; object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }

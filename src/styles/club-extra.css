@@ -1,0 +1,138 @@
+/* Дополнение к club.css — подключать после него */
+
+/* ---------- профиль клаббера ---------- */
+.modal__ban {
+  position: absolute; left: 14px; top: 12px; z-index: 2;
+  width: 24px; height: 24px; border: 0; border-radius: 50%;
+  background: linear-gradient(180deg, #ff5a5a, #d01f1f);
+  color: #fff; font-size: 13px; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+.modal { position: relative; }
+
+.profile__status {
+  position: relative; margin-bottom: 20px; padding: 10px 26px; text-align: center;
+  color: var(--text-dim); font-size: 13px;
+  border-top: 1px solid #4ec8cf; border-bottom: 1px solid #4ec8cf;
+}
+.profile__status::before, .profile__status::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 14px;
+  border: 1px solid #4ec8cf;
+}
+.profile__status::before { left: 0; border-right: 0; clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+.profile__status::after { right: 0; border-left: 0; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+.profile__row { display: flex; align-items: center; gap: 16px; }
+.profile__photo { width: 130px; height: 130px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; }
+.profile__info { flex: 1; min-width: 0; }
+.profile__city { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; font-size: 14px; }
+.profile__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+.stat { display: flex; align-items: center; gap: 6px; }
+.stat__icon { opacity: .8; font-size: 14px; }
+.stat__value {
+  min-width: 62px; padding: 4px 8px; border-radius: 5px; text-align: center;
+  background: #ffffff; color: #1c1830; font-size: 13px; font-weight: 600;
+}
+.profile__vk {
+  width: 52px; height: 52px; border-radius: 12px; flex: 0 0 auto;
+  background: #2787f5; color: #fff; display: grid; place-items: center;
+  font-size: 26px; font-weight: 700; text-decoration: none;
+}
+.profile__owner {
+  display: flex; align-items: center; gap: 10px; margin-top: 18px;
+  padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.05);
+}
+.profile__owner img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.profile__owner-label { font-size: 12px; color: var(--text-dim); }
+.profile__owner-name { color: #6fa8ff; font-size: 13px; cursor: pointer; }
+.profile__owner .btn-primary { margin: 0 0 0 auto; }
+.btn-primary--sm { height: 30px; padding: 0 16px; font-size: 13px; margin-top: 0; }
+.btn-primary:disabled { filter: grayscale(.6); cursor: default; }
+.btn-ghost {
+  display: block; margin: 10px auto 0; background: none; border: 0;
+  color: #6fa8ff; font-size: 13px; cursor: pointer;
+}
+.modal__hint { margin-top: 10px; font-size: 12px; color: var(--text-dim); }
+
+/* ---------- звание над аватаром ---------- */
+.clubber-slot { position: absolute; transform: translate(-50%,-50%); cursor: pointer;
+  animation: bob 1.6s ease-in-out infinite; }
+.clubber-slot .clubber { position: static; transform: none; animation: none; display: block; }
+.clubber__crown { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); font-size: 14px; }
+
+/* ---------- выбор клуба ---------- */
+.clublist-page { position: relative; min-height: 100vh; padding: 30px 0 40px;
+  background: var(--bg-app); color: var(--text); }
+.clublist { max-width: 1000px; margin: 30px auto 0; padding: 0 16px; }
+.clublist__head {
+  border-radius: 12px 12px 0 0; padding: 14px; text-align: center;
+  background: linear-gradient(180deg, #2f7f86, #1f5f66);
+  color: rgba(255,255,255,.75); font-size: 22px;
+}
+.clublist__grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 14px;
+  padding: 14px; background: rgba(255,255,255,.03); border-radius: 0 0 12px 12px;
+}
+.club-card { border: 0; background: none; color: var(--text); cursor: pointer;
+  text-align: left; padding: 0; }
+.club-card__title { font-size: 11px; color: #9fd6ff; margin-bottom: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.club-card__cover { position: relative; aspect-ratio: 1; border-radius: 4px; overflow: hidden; }
+.club-card__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.club-card__online {
+  position: absolute; left: 4px; bottom: 4px; padding: 1px 6px; border-radius: 8px;
+  background: rgba(0,0,0,.6); font-size: 11px;
+}
+.club-card__owner { margin-top: 4px; font-size: 11px; color: var(--accent); }
+.club-card__track { font-size: 11px; color: #6fa8ff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.create-club-tab {
+  position: fixed; left: 0; top: 40%; z-index: 30;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  border: 0; border-radius: 0 10px 10px 0; padding: 16px 8px;
+  background: linear-gradient(180deg, #b44cff, #7d1bc7); color: #fff;
+  font-size: 13px; cursor: pointer;
+}
+.page-footer { margin-top: 30px; text-align: center; font-size: 12px; color: var(--text-dim); }
+
+/* ---------- создание клуба ---------- */
+.create-club__label {
+  position: relative; margin-bottom: 22px; padding: 10px; text-align: center;
+  color: #4ec8cf; font-size: 15px; border: 1px solid rgba(78,200,207,.5); border-radius: 6px;
+}
+.create-club__label::after {
+  content: ''; position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%);
+  border: 9px solid transparent; border-top-color: rgba(78,200,207,.5); border-bottom: 0;
+}
+.community-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.community { border: 0; background: none; cursor: pointer; color: var(--text); padding: 0; }
+.community__name { font-size: 12px; margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.community__photo { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; }
+.community--active .community__photo { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- emoji ---------- */
+.emoji-panel {
+  position: relative; margin: 0 8px 6px; padding: 8px; border-radius: 10px;
+  background: #1b2a22; border: 1px solid #2e5b41;
+}
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; max-height: 190px; overflow-y: auto; }
+.emoji { border: 0; background: none; font-size: 17px; cursor: pointer; padding: 2px; }
+.emoji:disabled { cursor: default; }
+.emoji-lock {
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px;
+  border-radius: 10px; background: rgba(12,24,18,.72); text-align: center; padding: 12px;
+}
+.emoji-lock__icon { font-size: 22px; }
+.emoji-lock__text { font-size: 13px; line-height: 1.4; }
+
+/* ---------- чат: звания и новые сообщения ---------- */
+.msg--title { text-align: left; font-weight: 600; }
+.chat__new {
+  position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%); z-index: 5;
+  border: 0; border-radius: 16px; padding: 7px 16px;
+  background: linear-gradient(180deg, #b44cff, #7d1bc7); color: #fff;
+  font-size: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.5);
+}
+.chat { position: relative; }
