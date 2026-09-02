@@ -68,16 +68,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         </div>
       </div>
 
-      <div className="stage" style={{ backgroundImage: `url(${room.background})` }}>
-        <ClubFxLayer fx={fx} />
-
-        <NeonSign
-          text={p.signText}
-          color={room.signColor}
-          glow={room.signGlow}
-          flicker={fx.signFlicker}
-          style={tuned('sign', tweak)}
-        />
+      <div className="hud">
         {/* панель действий */}
         <div className="actionbar" style={{ left: LAYOUT.actionBar.left, top: LAYOUT.actionBar.top }}>
           <button className="btn-exit" onClick={p.onExit}>🚪 ВЫХОД</button>
@@ -110,6 +101,18 @@ export const ClubScene: React.FC<Props> = (p) => {
         <div className="top-badge" style={{ right: LAYOUT.topBadge.right, top: LAYOUT.topBadge.top }} onClick={p.onTop}>
           ТОП<br />КЛУБА
         </div>
+      </div>
+
+      <div className="stage" style={{ backgroundImage: `url(${room.background})` }}>
+        <ClubFxLayer fx={fx} />
+
+        <NeonSign
+          text={p.signText}
+          color={room.signColor}
+          glow={room.signGlow}
+          flicker={fx.signFlicker}
+          style={tuned('sign', tweak)}
+        />
 
         {p.decor && (
           <div className="decor" style={{ right: LAYOUT.decorSlot.right, top: LAYOUT.decorSlot.top }}>

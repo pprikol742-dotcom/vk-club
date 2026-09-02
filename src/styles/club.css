@@ -40,29 +40,35 @@
 /* ---------- сцена ---------- */
 .stage-wrap {
   position: relative; flex: 1; min-width: 0; padding-top: 30px;
-  display: flex; align-items: center; justify-content: center;
   background: #0b0714;
-  container-type: size;   /* нужен, чтобы вписать сцену без искажений */
+  overflow: hidden;
+  container-type: size;
 }
 
-/* Запасной вариант: сцена занимает всё место.
-   Картинка вписывается целиком, поэтому не плющится. */
+/* Слой интерфейса привязан к окну, поэтому кнопки не уезжают
+   вместе с обрезкой картинки. */
+.hud { position: absolute; inset: 30px 0 0 0; z-index: 30; pointer-events: none; }
+.hud > * { pointer-events: auto; }
+
+/* Зал заполняет всё окно: масштабируется по большей стороне,
+   лишнее уходит за края. Пропорции картинки не ломаются,
+   и все элементы едут вместе с ней. */
 .stage {
-  position: relative;
-  width: 100%; height: 100%;
-  background-size: contain;
+  position: absolute; left: 50%; top: calc(50% + 15px);
+  transform: translate(-50%, -50%);
+  width:  max(100cqw, calc(100cqh * 807 / 450));
+  height: max(100cqh, calc(100cqw * 450 / 807));
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
-  overflow: hidden;
 }
 
-/* Основной вариант: блок сцены точно повторяет пропорции фона,
-   поэтому все элементы садятся ровно на нарисованную комнату. */
-@supports (container-type: size) {
+/* Старые браузеры без размерных контейнеров: вписываем целиком. */
+@supports not (container-type: size) {
   .stage {
-    width:  min(100cqw, calc(100cqh * 807 / 450));
-    height: min(100cqh, calc(100cqw * 450 / 807));
-    background-size: 100% 100%;
+    position: relative; left: auto; top: auto; transform: none;
+    width: 100%; height: 100%;
+    background-size: contain;
   }
 }
 

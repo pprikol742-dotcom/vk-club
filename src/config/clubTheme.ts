@@ -34,19 +34,15 @@ export const LAYOUT = {
   topBadge:  { right: '0%',  top: '1.5%' },
 
   /** вывеска ложится ровно внутрь неоновой рамки на фоне */
-  sign:      { left: '50%', top: '18%', width: '36%' },
-  /** зеркальный шар нарисован на фоне — сюда крепим лучи */
-  discoBall: { left: '50%', top: '45%' },
-  /** окно трека — компактное, под вывеской */
-  player:    { left: '25%', top: '33%', width: '50%' },
-  /** диджей стоит за пультом */
-  djSlot:    { left: '50%', top: '58%' },
-  djButton:  { left: '24%', top: '62%' },
-  /** угощение у края сцены */
-  giftSpot:  { left: '35%', top: '72%' },
-  decorSlot: { right: '9%', top: '30%' },
-  /** танцпол перед сценой */
-  danceFloor:{ left: '2%', top: '70%', width: '96%', height: '30%' },
+  /** вывеска ложится внутрь неоновой рамки на фоне */
+  sign:      { left: '51%',   top: '21%',   width: '32%' },
+  discoBall: { left: '50%',   top: '45%' },
+  player:    { left: '31%',   top: '33.5%', width: '46%' },
+  djSlot:    { left: '52.5%', top: '55.5%' },
+  djButton:  { left: '52%',   top: '74.5%' },
+  giftSpot:  { left: '35%',   top: '72%' },
+  decorSlot: { right: '9%',   top: '30%' },
+  danceFloor:{ left: '0%',    top: '71.5%', width: '96%', height: '28%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
