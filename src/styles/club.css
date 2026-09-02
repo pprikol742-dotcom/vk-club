@@ -39,7 +39,7 @@
 
 /* ---------- сцена ---------- */
 .stage-wrap {
-  position: relative; flex: 1; min-width: 0; padding-top: 30px;
+  position: relative; flex: 1; min-width: 0;
   background: #0b0714;
   overflow: hidden;
   container-type: size;
@@ -47,14 +47,14 @@
 
 /* Слой интерфейса привязан к окну, поэтому кнопки не уезжают
    вместе с обрезкой картинки. */
-.hud { position: absolute; inset: 30px 0 0 0; z-index: 30; pointer-events: none; }
+.hud { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
 .hud > * { pointer-events: auto; }
 
 /* Зал заполняет всё окно: масштабируется по большей стороне,
    лишнее уходит за края. Пропорции картинки не ломаются,
    и все элементы едут вместе с ней. */
 .stage {
-  position: absolute; left: 50%; top: calc(50% + 15px);
+  position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%);
   width:  max(100cqw, calc(100cqh * 807 / 450));
   height: max(100cqh, calc(100cqw * 450 / 807));
@@ -98,6 +98,7 @@
   border: 1px solid rgba(255,255,255,.18);
   font-size: 13px; font-weight: 700; color: #fff; cursor: pointer;
 }
+.coins__votes { margin-left: 6px; padding-left: 8px; border-left: 1px solid rgba(255,255,255,.25); font-size: 12px; font-weight: 600; }
 .coins__icon { width: 20px; height: 20px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffd97a, var(--coin));
   display: grid; place-items: center; color: #7a4a00; font-size: 11px; }
@@ -179,8 +180,16 @@
 .decor { position: absolute; z-index: 12; font-size: 30px; }
 
 /* ---------- чат ---------- */
-.chat { width: 232px; flex: 0 0 232px; display: flex; flex-direction: column;
-  background: var(--bg-chat); padding-top: 30px; }
+.chat {
+  width: 200px; flex: 0 0 200px; display: flex; flex-direction: column;
+  background: var(--bg-chat); transition: flex-basis .18s ease, width .18s ease;
+}
+.chat--collapsed { width: 0; flex-basis: 0; overflow: hidden; }
+.chat-toggle {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 40;
+  width: 18px; height: 54px; border: 0; border-radius: 6px 0 0 6px;
+  background: rgba(40,28,66,.9); color: #cfc6e8; font-size: 12px; cursor: pointer;
+}
 .chat__list { flex: 1; overflow-y: auto; font-size: 11px; }
 .chat__list::-webkit-scrollbar { width: 6px }
 .chat__list::-webkit-scrollbar-thumb { background: #3a3550; border-radius: 3px }

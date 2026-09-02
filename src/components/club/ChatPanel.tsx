@@ -23,6 +23,7 @@ export const ChatPanel: React.FC<Props> = ({
 }) => {
   const [value, setValue] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [pinned, setPinned] = useState(true);      // прокрутка приклеена к низу
   const [unread, setUnread] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -63,8 +64,19 @@ export const ChatPanel: React.FC<Props> = ({
     </span>
   );
 
+  if (collapsed) {
+    return (
+      <button className="chat-toggle" title="Показать чат" onClick={() => setCollapsed(false)}>
+        ‹
+      </button>
+    );
+  }
+
   return (
     <aside className="chat">
+      <button className="chat-toggle chat-toggle--inside" title="Скрыть чат" onClick={() => setCollapsed(true)}>
+        ›
+      </button>
       <div className="chat__list" ref={listRef} onScroll={onScroll}>
         {messages.map((m) => {
           if (m.kind === 'admin') {

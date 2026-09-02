@@ -170,3 +170,9 @@
   font-size: 12px; cursor: pointer;
 }
 .tuner__btn--ghost { background: rgba(255,255,255,.12); }
+
+/* кнопка сворачивания чата */
+.chat-toggle--inside {
+  right: auto; left: -18px;
+  background: rgba(40,28,66,.9);
+}

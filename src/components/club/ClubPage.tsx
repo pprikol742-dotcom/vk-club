@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import bridge from '@vkontakte/vk-bridge';
 import { ClubScene } from './ClubScene';
 import type { Clubber } from './ClubberAvatar';
 import { ChatPanel, type ChatMessage } from './ChatPanel';
@@ -83,6 +84,13 @@ export const ClubPage: React.FC<Props> = (p) => {
   const [banTarget, setBanTarget] = useState<{ id: string; name: string } | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [giftTarget, setGiftTarget] = useState<{ id: string | null; name?: string } | null>(null);
+
+  // просим у ВК максимум места под игру
+  useEffect(() => {
+    bridge
+      .send('VKWebAppResizeWindow', { width: 1000, height: 900 })
+      .catch(() => {});
+  }, []);
 
   /** приветствие клуба всегда первая строка чата — при каждом входе */
   const messages = useMemo<ChatMessage[]>(() => {

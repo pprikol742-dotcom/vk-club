@@ -59,15 +59,6 @@ export const ClubScene: React.FC<Props> = (p) => {
 
   return (
     <div className="stage-wrap" style={cssVars}>
-      <div className="topbar">
-        <div className="topbar__left">▶ {room.title}</div>
-        <div className="topbar__right">
-          <span className="topbar__link" onClick={p.onHelp}>Помощь</span>
-          <span className="topbar__votes">У вас <b>{p.votes}</b> голосов</span>
-          <span className="topbar__link">Действия ⌄</span>
-        </div>
-      </div>
-
       <div className="hud">
         {/* панель действий */}
         <div className="actionbar" style={{ left: LAYOUT.actionBar.left, top: LAYOUT.actionBar.top }}>
@@ -88,6 +79,7 @@ export const ClubScene: React.FC<Props> = (p) => {
           )}
           <button className="btn-round" title="Свет и эффекты" onClick={toggleFxMenu}>⚙</button>
           <button className="btn-round" title="Подгонка раскладки" onClick={toggleTuner}>📐</button>
+          <button className="btn-round" title="Помощь" onClick={p.onHelp}>?</button>
           {p.extraButtons}
         </div>
 
@@ -95,6 +87,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         <div className="coins" style={{ right: LAYOUT.coins.right, top: LAYOUT.coins.top }} onClick={p.onCoins}>
           <span className="coins__icon">▶</span>
           {p.coins}
+          <span className="coins__votes" title="Голоса ВК">🗳 {p.votes}</span>
         </div>
 
         {/* топ клуба */}
