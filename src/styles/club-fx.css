@@ -63,7 +63,7 @@
 }
 
 /* ---------- дым ---------- */
-.fx-smoke { position: absolute; left: 0; right: 0; top: 46%; height: 34%; }
+.fx-smoke { position: absolute; left: 0; right: 0; top: 40%; height: 34%; }
 .fx-smoke__puff {
   position: absolute; bottom: 0; width: 220px; height: 120px; border-radius: 50%;
   background: radial-gradient(ellipse at center, rgba(220,210,255,.16), transparent 70%);
@@ -80,7 +80,7 @@
 
 /* ---------- гирлянда по краю сцены ---------- */
 .fx-bulbs {
-  position: absolute; left: 33%; right: 33%; top: 68.5%; height: 6px;
+  position: absolute; left: 31%; right: 31%; top: 77%; height: 6px;
   background-image: radial-gradient(circle, rgba(255,214,140,.95) 0 2px, transparent 2.5px);
   background-size: 14px 6px; background-repeat: repeat-x;
   filter: drop-shadow(0 0 4px rgba(255,190,90,.9));
@@ -101,7 +101,7 @@
 
 /* ---------- блики на полу ---------- */
 .fx-floor {
-  position: absolute; left: 12%; right: 12%; top: 76%; height: 20%;
+  position: absolute; left: 10%; right: 10%; top: 82%; height: 18%;
   background:
     radial-gradient(ellipse at 25% 40%, rgba(0,229,255,.18), transparent 60%),
     radial-gradient(ellipse at 72% 55%, rgba(255,62,200,.18), transparent 60%);
