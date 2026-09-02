@@ -26,29 +26,30 @@ export const ROOMS: Record<RoomId, RoomTheme> = {
 
 /** Всё в процентах от сцены — раскладка едет вместе с фоном на любом экране. */
 export const LAYOUT = {
-  /** пропорция фона зала 807×450 */
-  aspect: 807 / 450,
+  /** пропорция фона зала 600×450 */
+  aspect: 600 / 450,
 
   actionBar: { left: '1.5%', top: '2.5%' },
   coins:     { right: '4%',  top: '3.5%' },
   topBadge:  { right: '0%',  top: '1.5%' },
 
-  /** вывеска ложится внутрь неоновой рамки на фоне */
-  sign:      { left: '49.7%', top: '14%',   width: '40%' },
-  discoBall: { left: '50.8%', top: '34.5%' },
-  player:    { left: '27%',   top: '30%',   width: '46%' },
-  djSlot:    { left: '50%',   top: '52%' },
-  djButton:  { left: '26%',   top: '60%' },
-  giftSpot:  { left: '35%',   top: '74%' },
-  decorSlot: { right: '9%',   top: '25%' },
-  danceFloor:{ left: '2%',    top: '79%',   width: '96%', height: '21%' },
+  /** вывеска — в верхней части неоновой рамки */
+  sign:      { left: '50%',   top: '17%',   width: '46%' },
+  discoBall: { left: '50.3%', top: '41%' },
+  /** окно трека — в нижней части рамки, как табло */
+  player:    { left: '27%',   top: '29%',   width: '46%' },
+  djSlot:    { left: '50%',   top: '46%' },
+  djButton:  { left: '25%',   top: '55%' },
+  giftSpot:  { left: '33%',   top: '66%' },
+  decorSlot: { right: '8%',   top: '25%' },
+  danceFloor:{ left: '2%',    top: '72%',   width: '96%', height: '28%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
 export const CROWD_SLOTS = [
-  { x: 8,  y: 48 }, { x: 21, y: 76 }, { x: 34, y: 46 }, { x: 47, y: 78 },
-  { x: 60, y: 46 }, { x: 73, y: 76 }, { x: 86, y: 48 }, { x: 95, y: 74 },
-  { x: 14, y: 20 }, { x: 40, y: 18 }, { x: 66, y: 18 }, { x: 92, y: 20 },
+  { x: 9,  y: 52 }, { x: 23, y: 78 }, { x: 37, y: 50 }, { x: 50, y: 80 },
+  { x: 63, y: 50 }, { x: 77, y: 78 }, { x: 90, y: 52 }, { x: 96, y: 26 },
+  { x: 16, y: 24 }, { x: 42, y: 22 }, { x: 68, y: 22 }, { x: 4,  y: 26 },
 ];
 
 /** Ключи, которые можно двигать в режиме настройки раскладки. */

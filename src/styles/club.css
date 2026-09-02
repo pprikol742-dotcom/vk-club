@@ -50,14 +50,14 @@
 .hud { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
 .hud > * { pointer-events: auto; }
 
-/* Зал заполняет всё окно: масштабируется по большей стороне,
-   лишнее уходит за края. Пропорции картинки не ломаются,
-   и все элементы едут вместе с ней. */
+/* Зал вписан целиком: масштабируется по меньшей стороне,
+   по краям остаются поля. Пропорции сохраняются,
+   элементы садятся ровно на нарисованную комнату. */
 .stage {
   position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  width:  max(100cqw, calc(100cqh * 807 / 450));
-  height: max(100cqh, calc(100cqw * 450 / 807));
+  width:  min(100cqw, calc(100cqh * 600 / 450));
+  height: min(100cqh, calc(100cqw * 450 / 600));
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
@@ -181,8 +181,9 @@
 
 /* ---------- чат ---------- */
 .chat {
-  width: 200px; flex: 0 0 200px; display: flex; flex-direction: column;
-  background: var(--bg-chat); transition: flex-basis .18s ease, width .18s ease;
+  width: 232px; flex: 0 0 232px; display: flex; flex-direction: column;
+  background: var(--bg-chat);
+  transition: flex-basis .18s ease, width .18s ease;
 }
 .chat--collapsed { width: 0; flex-basis: 0; overflow: hidden; }
 .chat-toggle {

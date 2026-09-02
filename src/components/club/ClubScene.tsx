@@ -87,7 +87,6 @@ export const ClubScene: React.FC<Props> = (p) => {
         <div className="coins" style={{ right: LAYOUT.coins.right, top: LAYOUT.coins.top }} onClick={p.onCoins}>
           <span className="coins__icon">▶</span>
           {p.coins}
-          <span className="coins__votes" title="Голоса ВК">🗳 {p.votes}</span>
         </div>
 
         {/* топ клуба */}
