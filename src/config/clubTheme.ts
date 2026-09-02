@@ -33,23 +33,22 @@ export const LAYOUT = {
   coins:     { right: '4%',  top: '3.5%' },
   topBadge:  { right: '0%',  top: '1.5%' },
 
-  /** вывеска ложится ровно внутрь неоновой рамки на фоне */
   /** вывеска ложится внутрь неоновой рамки на фоне */
-  sign:      { left: '51%',   top: '21%',   width: '32%' },
-  discoBall: { left: '50%',   top: '45%' },
-  player:    { left: '31%',   top: '33.5%', width: '46%' },
-  djSlot:    { left: '52.5%', top: '55.5%' },
-  djButton:  { left: '52%',   top: '74.5%' },
-  giftSpot:  { left: '35%',   top: '72%' },
-  decorSlot: { right: '9%',   top: '30%' },
-  danceFloor:{ left: '0%',    top: '71.5%', width: '96%', height: '28%' },
+  sign:      { left: '49.7%', top: '14%',   width: '40%' },
+  discoBall: { left: '50.8%', top: '34.5%' },
+  player:    { left: '27%',   top: '30%',   width: '46%' },
+  djSlot:    { left: '50%',   top: '52%' },
+  djButton:  { left: '26%',   top: '60%' },
+  giftSpot:  { left: '35%',   top: '74%' },
+  decorSlot: { right: '9%',   top: '25%' },
+  danceFloor:{ left: '2%',    top: '79%',   width: '96%', height: '21%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
 export const CROWD_SLOTS = [
-  { x: 8,  y: 55 }, { x: 21, y: 78 }, { x: 34, y: 52 }, { x: 47, y: 80 },
-  { x: 60, y: 54 }, { x: 73, y: 80 }, { x: 86, y: 54 }, { x: 95, y: 78 },
-  { x: 14, y: 30 }, { x: 40, y: 28 }, { x: 66, y: 28 }, { x: 90, y: 30 },
+  { x: 8,  y: 48 }, { x: 21, y: 76 }, { x: 34, y: 46 }, { x: 47, y: 78 },
+  { x: 60, y: 46 }, { x: 73, y: 76 }, { x: 86, y: 48 }, { x: 95, y: 74 },
+  { x: 14, y: 20 }, { x: 40, y: 18 }, { x: 66, y: 18 }, { x: 92, y: 20 },
 ];
 
 /** Ключи, которые можно двигать в режиме настройки раскладки. */
