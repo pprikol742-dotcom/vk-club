@@ -7,6 +7,7 @@ import { NeonSign } from './NeonSign';
 import { ClubFxLayer } from './ClubFxLayer';
 import { EffectsMenu } from './EffectsMenu';
 import { LayoutTuner, tuned } from './LayoutTuner';
+import { VideoScreen } from './VideoScreen';
 import { canEditWelcome, type ClubRole } from '../../config/frames';
 
 export type { Clubber };
@@ -25,6 +26,10 @@ interface Props {
   queuePosition: number | null;
   crowd: Clubber[];
   floorGift?: string | null;
+  /** ссылка на клип, который крутится в зале */
+  videoUrl?: string | null;
+  /** сколько секунд клип уже идёт */
+  videoOffset?: number;
   decor?: string | null;
   onExit: () => void;
   onBecomeDj: () => void;
@@ -119,6 +124,15 @@ export const ClubScene: React.FC<Props> = (p) => {
           onVote={p.onVote}
           onGift={p.onGiftDj}
         />
+
+        {p.videoUrl && (
+          <VideoScreen
+            url={p.videoUrl}
+            offset={p.videoOffset ?? 0}
+            muted={muted}
+            style={tuned('videoScreen', tweak)}
+          />
+        )}
 
         {/* место диджея */}
         {p.dj ? (

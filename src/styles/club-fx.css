@@ -226,3 +226,23 @@
 }
 .music__field input:focus { border-color: var(--accent); }
 .music__load--wide { width: 100%; height: 34px; }
+
+/* поле выбора файла */
+.music__field input[type="file"] {
+  padding: 6px 8px; height: auto; font-size: 12px;
+}
+
+/* ---------- экран с клипом ---------- */
+.video-screen {
+  position: absolute; z-index: 14; transform: translate(-50%, -50%);
+  aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
+  border: 2px solid var(--neon, #c14bff);
+  box-shadow: 0 0 24px var(--neon-soft, rgba(193,75,255,.6)), 0 10px 24px rgba(0,0,0,.6);
+  background: #000;
+}
+.video-screen iframe { width: 100%; height: 100%; display: block; border: 0; }
+.video-screen__close {
+  position: absolute; right: 4px; top: 4px; z-index: 2;
+  width: 20px; height: 20px; border: 0; border-radius: 50%;
+  background: rgba(0,0,0,.6); color: #fff; font-size: 11px; cursor: pointer;
+}

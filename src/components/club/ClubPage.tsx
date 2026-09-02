@@ -41,6 +41,8 @@ interface Props {
   queueMinutes: number;
   messages: ChatMessage[];
   floorGift?: string | null;
+  videoUrl?: string | null;
+  videoOffset?: number;
   decor?: string | null;
   appUrl: string;
   emojiSubscribed: boolean;
@@ -132,6 +134,8 @@ export const ClubPage: React.FC<Props> = (p) => {
           crowd={p.crowd}
           queuePosition={p.queuePosition}
           floorGift={p.floorGift}
+          videoUrl={p.videoUrl}
+          videoOffset={p.videoOffset}
           decor={p.decor}
           onExit={p.onExit}
           onBecomeDj={p.onBecomeDj}

@@ -231,6 +231,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 title: track.title,
                 duration: track.duration,
                 url: track.url ?? null,
+                video_url: (track as any).video_url ?? null,
               }
             : undefined,
         });
@@ -388,6 +389,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         queueMinutes={15}
         messages={messages}
         appUrl={APP_URL}
+        videoUrl={(session as any)?.track_video_url ?? null}
+        videoOffset={musicPosition}
         emojiSubscribed={Boolean((profile as any).emoji_until)}
         emojiPrice={5}
         openedProfile={openedProfile}
@@ -454,9 +457,18 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       )}
       {sideModal === "music" && (
         <MusicPickerModal
-          appId={APP_ID}
+          vkId={profile.vk_id}
           onClose={() => setSideModal(null)}
           onPick={pickTrack}
+          onPickClip={(v) =>
+            pickTrack({
+              id: `clip_${Date.now()}`,
+              artist: v.artist,
+              title: v.title,
+              duration: v.duration,
+              video_url: v.url,
+            } as any)
+          }
         />
       )}
     </div>
