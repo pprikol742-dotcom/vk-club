@@ -17,6 +17,8 @@ import type { GiftItem } from "../../components/modals/ClubModals";
 import type { ClubberProfile } from "../../components/modals/ProfileModal";
 import { genderFromVk, type ClubRole } from "../../config/frames";
 import { useClubMusic } from "./useClubMusic";
+import { MusicPickerModal } from "./MusicPickerModal";
+import type { ClubTrack } from "../../lib/music";
 
 const APP_URL = "https://vk.com/app54737632";
 const APP_ID = 54737632;
@@ -46,7 +48,29 @@ const DJ_GIFTS = withIcons([
   { id: "chifir", name: "Чифир", price: 6 },
 ]);
 
-type SideModal = "hands" | "decorate" | "leaderboard" | null;
+type SideModal = "hands" | "decorate" | "leaderboard" | "music" | null;
+
+/** Достаём настоящий текст ошибки из ответа Edge Function. */
+async function describeError(e: unknown): Promise<string> {
+  const err = e as any;
+  const ctx = err?.context;
+  if (ctx && typeof ctx.text === "function") {
+    try {
+      const body = await ctx.text();
+      if (body) {
+        try {
+          const parsed = JSON.parse(body);
+          return parsed.error ?? parsed.message ?? body;
+        } catch {
+          return body;
+        }
+      }
+    } catch {
+      /* тело уже прочитано */
+    }
+  }
+  return err?.message ?? "Неизвестная ошибка";
+}
 
 export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const leaveClub = onLeaveClub ?? (() => useAppStore.setState({ club: null } as any));
@@ -192,19 +216,37 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   );
 
   const djAction = useCallback(
-    async (action: "join" | "advance") => {
+    async (action: "join" | "advance", track?: ClubTrack) => {
       if (!club) return;
       try {
         await callEdgeFunction("dj-action", {
           launchParams: getLaunchParams(),
           club_id: club.id,
           action,
+          track: track
+            ? {
+                id: track.id,
+                artist: track.artist,
+                title: track.title,
+                duration: track.duration,
+                url: track.url ?? null,
+              }
+            : undefined,
         });
       } catch (e) {
-        alert((e as Error).message);
+        alert(await describeError(e));
       }
     },
     [club],
+  );
+
+  /** «Стать DJ» — сперва выбираем, что заряжать. */
+  const pickTrack = useCallback(
+    async (track: ClubTrack) => {
+      setSideModal(null);
+      await djAction("join", track);
+    },
+    [djAction],
   );
 
   const sendChat = useCallback(
@@ -353,7 +395,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         playerGifts={PLAYER_GIFTS}
         giftBusy={giftBusy}
         onExit={leaveClub}
-        onBecomeDj={() => djAction("join")}
+        onBecomeDj={() => setSideModal("music")}
         onVote={() => {}}
         onSendGift={sendGift}
         onSkipQueue={() => {}}
@@ -408,6 +450,13 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       {sideModal === "decorate" && <DecorateClubModal onClose={() => setSideModal(null)} />}
       {sideModal === "leaderboard" && (
         <LeaderboardModal clubId={club.id} onClose={() => setSideModal(null)} />
+      )}
+      {sideModal === "music" && (
+        <MusicPickerModal
+          appId={APP_ID}
+          onClose={() => setSideModal(null)}
+          onPick={pickTrack}
+        />
       )}
     </div>
   );

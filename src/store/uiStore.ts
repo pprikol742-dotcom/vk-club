@@ -88,7 +88,7 @@ export const useUi = create<UiState>()(
       fxMenuOpen: false,
       tunerOpen: false,
       tweak: {},
-      avatarSize: 66,
+      avatarSize: 68,
       lastResult: null,
       open: (m) => set({ modal: m }),
       close: () => set({ modal: null }),
@@ -104,7 +104,7 @@ export const useUi = create<UiState>()(
       toggleTuner: () => set((s) => ({ tunerOpen: !s.tunerOpen })),
       setTweak: (key, patch) =>
         set((s) => ({ tweak: { ...s.tweak, [key]: { ...s.tweak[key], ...patch } } })),
-      resetTweak: () => set({ tweak: {}, avatarSize: 66 }),
+      resetTweak: () => set({ tweak: {}, avatarSize: 68 }),
       setAvatarSize: (px) => set({ avatarSize: px }),
       showResult: (r) => set({ lastResult: r, modal: 'trackResult' }),
     }),

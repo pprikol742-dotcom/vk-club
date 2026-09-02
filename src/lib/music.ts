@@ -69,6 +69,27 @@ export function vkMusicSource(appId: number): MusicSource {
   };
 }
 
+/** Моя музыка ВКонтакте — то, что добавлено в аудиозаписи. */
+export async function fetchMyAudio(appId: number, count = 100): Promise<ClubTrack[]> {
+  const token = await getAudioToken(appId);
+  if (!token) throw new Error('ВКонтакте не дал доступ к аудиозаписям');
+
+  const res: any = await bridge.send('VKWebAppCallAPIMethod', {
+    method: 'audio.get',
+    params: { count, v: '5.199', access_token: token },
+  });
+  if (res?.error_type) {
+    throw new Error(res?.error_data?.error_msg ?? 'Не удалось загрузить аудиозаписи');
+  }
+  return (res?.response?.items ?? []).map((a: any) => ({
+    id: `${a.owner_id}_${a.id}`,
+    artist: a.artist,
+    title: a.title,
+    duration: a.duration,
+    url: a.url || undefined,
+  }));
+}
+
 /* ---------------- запасной источник: свои файлы ---------------- */
 
 /**

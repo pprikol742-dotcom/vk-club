@@ -33,16 +33,15 @@ export const LAYOUT = {
   coins:     { right: '4%',  top: '3.5%' },
   topBadge:  { right: '0%',  top: '1.5%' },
 
-  /** вывеска — в верхней части неоновой рамки */
-  sign:      { left: '50%',   top: '17%',   width: '46%' },
+  /** вывеска в неоновой рамке */
+  sign:      { left: '48.5%', top: '21%', width: '32%' },
   discoBall: { left: '50.3%', top: '41%' },
-  /** окно трека — в нижней части рамки, как табло */
-  player:    { left: '27%',   top: '29%',   width: '46%' },
-  djSlot:    { left: '50%',   top: '46%' },
-  djButton:  { left: '25%',   top: '55%' },
+  player:    { left: '40.5%', top: '32%', width: '45%' },
+  djSlot:    { left: '50.5%', top: '43%' },
+  djButton:  { left: '52%',   top: '58%' },
   giftSpot:  { left: '33%',   top: '66%' },
   decorSlot: { right: '8%',   top: '25%' },
-  danceFloor:{ left: '2%',    top: '72%',   width: '96%', height: '28%' },
+  danceFloor:{ left: '0%',    top: '58%', width: '96%', height: '40%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
