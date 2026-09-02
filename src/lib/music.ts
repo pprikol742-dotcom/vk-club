@@ -29,6 +29,9 @@ let audioToken: string | null = null;
  * Настоящую причину отказа не прячем — по ней понятно, что чинить.
  */
 export async function getAudioToken(appId: number): Promise<string> {
+  if (!appId) {
+    throw new Error('Не задан VITE_VK_APP_ID — ВК не поймёт, какое приложение спрашивает доступ');
+  }
   if (audioToken) return audioToken;
   try {
     const res = await bridge.send('VKWebAppGetAuthToken', { app_id: appId, scope: 'audio' });

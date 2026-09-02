@@ -19,7 +19,9 @@ export const MusicPickerModal: React.FC<{
   busy?: boolean;
   onClose: () => void;
   onPick: (track: ClubTrack) => void;
-}> = ({ appId, busy, onClose, onPick }) => {
+  /** запасной ввод по ссылке — по умолчанию скрыт */
+  allowLink?: boolean;
+}> = ({ appId, busy, onClose, onPick, allowLink = false }) => {
   const [tab, setTab] = useState<Tab>('vk');
   const [tracks, setTracks] = useState<ClubTrack[]>([]);
   const [query, setQuery] = useState('');
@@ -76,6 +78,7 @@ export const MusicPickerModal: React.FC<{
 
   return (
     <Modal title="Выбери трек" onClose={onClose} width={480}>
+      {allowLink && (
       <div className="music__tabs">
         <button
           className={'music__tab' + (tab === 'vk' ? ' is-active' : '')}
@@ -90,8 +93,9 @@ export const MusicPickerModal: React.FC<{
           По ссылке
         </button>
       </div>
+      )}
 
-      {tab === 'vk' ? (
+      {tab === 'vk' || !allowLink ? (
         <>
           <div className="music__search">
             <input
@@ -110,8 +114,8 @@ export const MusicPickerModal: React.FC<{
               <div className="music__hint">
                 <div>{error}</div>
                 <div className="music__hint-small">
-                  Доступ к аудиозаписям выдаётся приложению отдельно. Пока его нет,
-                  заряжай треки на вкладке «По ссылке».
+                  Разреши приложению доступ к аудиозаписям — окно с запросом
+                  появляется при первом нажатии.
                 </div>
                 <button className="btn-primary btn-primary--sm" onClick={loadMine}>Повторить</button>
               </div>

@@ -20,8 +20,9 @@ import { useClubMusic } from "./useClubMusic";
 import { MusicPickerModal } from "./MusicPickerModal";
 import type { ClubTrack } from "../../lib/music";
 
-const APP_URL = "https://vk.com/app54737632";
-const APP_ID = 54737632;
+/** ID приложения берём из окружения — иначе ВК ответит «Wrong app id». */
+const APP_ID = Number(import.meta.env.VITE_VK_APP_ID ?? 0);
+const APP_URL = `https://vk.com/app${APP_ID}`;
 
 /** Подарки клабберу и диджею — иконки берём из твоего giftIcons. */
 const withIcons = (list: Array<{ id: string; name: string; price: number }>): GiftItem[] =>
