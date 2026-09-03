@@ -174,7 +174,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       artist: session.track_artist ?? "",
       title: session.track_title ?? "",
       position: musicPosition,
-      duration: (session as any).track_duration ?? (session as any).duration ?? 0,
+      duration: (session as any).track_duration_sec ?? 0,
       likes: session.likes ?? 0,
       dislikes: session.dislikes ?? 0,
       gifts: (session as any).gifts ?? 0,
@@ -226,12 +226,16 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
           action,
           track: track
             ? {
-                id: track.id,
-                artist: track.artist,
                 title: track.title,
-                duration: track.duration,
+                artist: track.artist,
+                source: (track as any).video_url
+                  ? "clip"
+                  : String(track.id).startsWith("clip_")
+                    ? "clip"
+                    : "library",
                 url: track.url ?? null,
                 video_url: (track as any).video_url ?? null,
+                duration_sec: track.duration,
               }
             : undefined,
         });

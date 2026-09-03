@@ -41,9 +41,17 @@ export const MusicPickerModal: React.FC<{
 
   // клип
   const [clipUrl, setClipUrl] = useState('');
-  const [clipArtist, setClipArtist] = useState('');
-  const [clipTitle, setClipTitle] = useState('');
-  const [clipMinutes, setClipMinutes] = useState('4');
+
+  /** Название вытащим из ссылки, длительность уточнит сам плеер. */
+  const playClip = () => {
+    const v = parseVideoUrl(clipUrl);
+    if (!v) return;
+    const name =
+      v.provider === 'rutube' ? 'Клип с Rutube'
+      : v.provider === 'vk' ? 'Клип из VK Видео'
+      : 'Клип';
+    onPickClip({ url: v.url, artist: 'Клип', title: name, duration: 300 });
+  };
 
   const load = async (which: Tab, q = '') => {
     if (which === 'upload') return;
@@ -109,21 +117,11 @@ export const MusicPickerModal: React.FC<{
             <span>Ссылка на клип (VK Видео или Rutube)</span>
             <input
               value={clipUrl}
+              autoFocus
               onChange={(e) => setClipUrl(e.target.value)}
               placeholder="https://rutube.ru/video/…"
+              onKeyDown={(e) => e.key === 'Enter' && playClip()}
             />
-          </label>
-          <label className="music__field">
-            <span>Исполнитель</span>
-            <input value={clipArtist} onChange={(e) => setClipArtist(e.target.value)} placeholder="Ария" />
-          </label>
-          <label className="music__field">
-            <span>Название</span>
-            <input value={clipTitle} onChange={(e) => setClipTitle(e.target.value)} placeholder="Улица роз" />
-          </label>
-          <label className="music__field">
-            <span>Длительность, минут</span>
-            <input value={clipMinutes} onChange={(e) => setClipMinutes(e.target.value)} inputMode="decimal" />
           </label>
 
           {clipUrl.trim() && !parseVideoUrl(clipUrl) && (
@@ -134,17 +132,10 @@ export const MusicPickerModal: React.FC<{
 
           <button
             className="music__load music__load--wide"
-            disabled={busy || !parseVideoUrl(clipUrl) || !clipTitle.trim()}
-            onClick={() =>
-              onPickClip({
-                url: clipUrl.trim(),
-                artist: clipArtist.trim() || 'Клип',
-                title: clipTitle.trim(),
-                duration: Math.max(30, Math.round(parseFloat(clipMinutes || '4') * 60)),
-              })
-            }
+            disabled={busy || !parseVideoUrl(clipUrl)}
+            onClick={playClip}
           >
-            Зарядить клип
+            Включить
           </button>
         </div>
       ) : tab === 'upload' ? (

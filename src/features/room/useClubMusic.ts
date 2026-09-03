@@ -14,7 +14,7 @@ export function useClubMusic(
   session: {
     track_url?: string | null;
     track_started_at?: string | null;
-    track_duration?: number | null;
+    track_duration_sec?: number | null;
     track_video_url?: string | null;
     dj_vk_id?: number | null;
   } | null,
