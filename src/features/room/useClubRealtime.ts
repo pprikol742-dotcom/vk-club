@@ -18,6 +18,18 @@ export interface Occupant extends PresenceMe {
   lightOn: boolean;
 }
 
+/** Поднятая рука над аватаркой: лайк или дизлайк. */
+export interface Reaction {
+  vkId: number;
+  kind: 'up' | 'down';
+  /** картинка скина руки */
+  skin: string | null;
+  until: number;
+}
+
+/** Сколько живёт поднятая рука и танец. */
+const REACTION_MS = 4000;
+
 /**
  * Одна realtime-комната на клуб:
  * - Postgres Changes на club_sessions (трек/DJ/лайки), chat_messages и gift_transactions
@@ -33,6 +45,7 @@ export function useClubRealtime(clubId: string | null, me: PresenceMe | null) {
 
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [occupants, setOccupants] = useState<Occupant[]>([]);
+  const [reactions, setReactions] = useState<Record<number, Reaction>>({});
   const myVkId = me?.vkId ?? null;
 
   useEffect(() => {
@@ -77,6 +90,21 @@ export function useClubRealtime(clubId: string | null, me: PresenceMe | null) {
           } as GiftEvent);
         },
       )
+      .on("broadcast", { event: "reaction" }, ({ payload }) => {
+        const r = payload as { vkId: number; kind: "up" | "down"; skin: string | null };
+        if (!r?.vkId) return;
+        setReactions((prev) => ({
+          ...prev,
+          [r.vkId]: { ...r, until: Date.now() + REACTION_MS },
+        }));
+        setTimeout(() => {
+          setReactions((prev) => {
+            const next = { ...prev };
+            if (next[r.vkId] && next[r.vkId].until <= Date.now()) delete next[r.vkId];
+            return next;
+          });
+        }, REACTION_MS + 100);
+      })
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState<Partial<Occupant> & { light_show?: boolean }>();
         const list: Occupant[] = [];
@@ -138,5 +166,22 @@ export function useClubRealtime(clubId: string | null, me: PresenceMe | null) {
     [me, setLightShow],
   );
 
-  return { toggleMyLightShow, occupants };
+  /** Показать всем поднятую руку. */
+  const sendReaction = useCallback(
+    (kind: "up" | "down", skin: string | null) => {
+      if (!me) return;
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "reaction",
+        payload: { vkId: me.vkId, kind, skin },
+      });
+      setReactions((prev) => ({
+        ...prev,
+        [me.vkId]: { vkId: me.vkId, kind, skin, until: Date.now() + REACTION_MS },
+      }));
+    },
+    [me],
+  );
+
+  return { toggleMyLightShow, occupants, reactions, sendReaction };
 }

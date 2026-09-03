@@ -30,6 +30,8 @@ interface Props {
   videoUrl?: string | null;
   /** сколько секунд клип уже идёт */
   videoOffset?: number;
+  /** поднятые руки: ключ — id клаббера */
+  reactions?: Record<string, { kind: 'up' | 'down'; skin: string | null }>;
   decor?: string | null;
   onExit: () => void;
   onBecomeDj: () => void;
@@ -37,6 +39,7 @@ interface Props {
   onClap: () => void;
   onVote: (v: 'up' | 'down') => void;
   onGiftDj: () => void;
+  onAddTrack?: () => void;
   onGiftUser: (userId: string) => void;
   onQueue: () => void;
   onCoins: () => void;
@@ -120,8 +123,9 @@ export const ClubScene: React.FC<Props> = (p) => {
         {/* плеер: пустой, когда никто не играет */}
         <TrackPlayer
           track={p.track}
-          style={{ left: LAYOUT.player.left, top: LAYOUT.player.top, width: LAYOUT.player.width }}
+          style={tuned('player', tweak)}
           onVote={p.onVote}
+          onAdd={p.onAddTrack}
           onGift={p.onGiftDj}
         />
 
@@ -204,6 +208,7 @@ export const ClubScene: React.FC<Props> = (p) => {
               y={CROWD_SLOTS[i].y}
               delay={(i % 5) * 0.18}
               isSelf={c.id === p.myId}
+              reaction={p.reactions?.[c.id] ?? null}
               onOpenProfile={p.onOpenProfile}
               onGift={p.onGiftUser}
             />

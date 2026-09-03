@@ -16,6 +16,7 @@ import type { ChatMessage as UiMessage } from "../../components/club/ChatPanel";
 import type { GiftItem } from "../../components/modals/ClubModals";
 import type { ClubberProfile } from "../../components/modals/ProfileModal";
 import { genderFromVk, type ClubRole } from "../../config/frames";
+import { addToMyTracks } from "../../lib/library";
 import { useClubMusic } from "./useClubMusic";
 import { MusicPickerModal } from "./MusicPickerModal";
 import type { ClubTrack } from "../../lib/music";
@@ -111,7 +112,10 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [profile, myRole],
   );
 
-  const { toggleMyLightShow, occupants } = useClubRealtime(club?.id ?? null, me);
+  const { toggleMyLightShow, occupants, reactions, sendReaction } = useClubRealtime(
+    club?.id ?? null,
+    me,
+  );
   const { position: musicPosition, unlock: unlockAudio } = useClubMusic(APP_ID, session as any);
 
   /* ---------- бан и приветствие ---------- */
@@ -181,6 +185,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     };
   }, [session, musicPosition]);
 
+  /** Реакции по строковым id — в таком виде их ждёт сцена. */
+  const reactionMap = useMemo(() => {
+    const out: Record<string, { kind: "up" | "down"; skin: string | null }> = {};
+    for (const r of Object.values(reactions)) {
+      out[String(r.vkId)] = { kind: r.kind, skin: r.skin };
+    }
+    return out;
+  }, [reactions]);
+
   const messages: UiMessage[] = useMemo(() => {
     const nameOf = (vkId: number) =>
       occupants.find((o) => o.vkId === vkId)?.name ?? `id${vkId}`;
@@ -195,6 +208,38 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   }, [chatMessages, occupants, profile]);
 
   /* ---------- действия ---------- */
+  /** Лайк и дизлайк: голос в базу и поднятая рука над аватаркой. */
+  const vote = useCallback(
+    async (kind: "up" | "down") => {
+      if (!club || !profile) return;
+      sendReaction(kind, handSkinIconUrl(profile.hand_skin) ?? null);
+      const { error } = await supabase.rpc("vote_track", {
+        p_club: club.id,
+        p_vk_id: profile.vk_id,
+        p_vote: kind,
+      });
+      if (error) alert(error.message);
+    },
+    [club, profile, sendReaction],
+  );
+
+  /** Плюсик в плеере — трек уезжает в личный плейлист. */
+  const addCurrentTrack = useCallback(async () => {
+    const url = (session as any)?.track_url;
+    if (!profile || !url) return;
+    try {
+      const { data, error } = await supabase
+        .from("tracks")
+        .select("id")
+        .eq("url", url)
+        .maybeSingle();
+      if (error) throw error;
+      if (data?.id) await addToMyTracks(profile.vk_id, data.id);
+    } catch (e) {
+      console.warn("add track failed", e);
+    }
+  }, [profile, session]);
+
   const sendGift = useCallback(
     async (gift: GiftItem, userId: string | null) => {
       if (!club) return;
@@ -404,7 +449,9 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         giftBusy={giftBusy}
         onExit={leaveClub}
         onBecomeDj={() => setSideModal("music")}
-        onVote={() => {}}
+        onVote={vote}
+        onAddTrack={addCurrentTrack}
+        reactions={reactionMap}
         onSendGift={sendGift}
         onSkipQueue={() => {}}
         onSendMessage={sendChat}

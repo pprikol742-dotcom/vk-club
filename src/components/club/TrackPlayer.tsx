@@ -17,6 +17,8 @@ interface Props {
   style?: React.CSSProperties;
   onVote: (v: 'up' | 'down') => void;
   onGift: () => void;
+  /** добавить трек в свой плейлист */
+  onAdd?: () => void;
 }
 
 const fmtLeft = (pos: number, dur: number) => {
@@ -26,8 +28,10 @@ const fmtLeft = (pos: number, dur: number) => {
   return `-${m}.${s}`;
 };
 
-export const TrackPlayer: React.FC<Props> = ({ track, style, onVote, onGift }) => {
+export const TrackPlayer: React.FC<Props> = ({ track, style, onVote, onGift, onAdd }) => {
+  const [added, setAdded] = React.useState(false);
   const empty = !track;
+  React.useEffect(() => { setAdded(false); }, [track?.artist, track?.title]);
   const pct = track && track.duration ? Math.min(100, (track.position / track.duration) * 100) : 0;
 
   return (
@@ -48,8 +52,15 @@ export const TrackPlayer: React.FC<Props> = ({ track, style, onVote, onGift }) =
         ) : (
           <>
             <div className="player__artist">
-              <span>{track!.artist}</span>
-              <span>+</span>
+              <span className="player__name">{track!.artist}</span>
+              <button
+                className={'player__add' + (added ? ' is-added' : '')}
+                title={added ? 'Трек у тебя в плейлисте' : 'Добавить к себе'}
+                disabled={added || !onAdd}
+                onClick={() => { onAdd?.(); setAdded(true); }}
+              >
+                {added ? '✓' : '+'}
+              </button>
             </div>
             <div className="player__title">{track!.title}</div>
             <div className="player__bar">

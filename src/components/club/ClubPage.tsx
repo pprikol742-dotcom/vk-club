@@ -43,6 +43,9 @@ interface Props {
   floorGift?: string | null;
   videoUrl?: string | null;
   videoOffset?: number;
+  reactions?: Record<string, { kind: 'up' | 'down'; skin: string | null }>;
+  /** плюсик в плеере — добавить трек к себе */
+  onAddTrack?: () => void;
   decor?: string | null;
   appUrl: string;
   emojiSubscribed: boolean;
@@ -136,6 +139,7 @@ export const ClubPage: React.FC<Props> = (p) => {
           floorGift={p.floorGift}
           videoUrl={p.videoUrl}
           videoOffset={p.videoOffset}
+          reactions={p.reactions}
           decor={p.decor}
           onExit={p.onExit}
           onBecomeDj={p.onBecomeDj}
@@ -143,6 +147,7 @@ export const ClubPage: React.FC<Props> = (p) => {
           onClap={p.onClap}
           onVote={p.onVote}
           onGiftDj={() => setGiftTarget({ id: null })}
+          onAddTrack={p.onAddTrack}
           onGiftUser={(id) => {
             const c = p.crowd.find((x) => x.id === id);
             setGiftTarget({ id, name: c?.name });

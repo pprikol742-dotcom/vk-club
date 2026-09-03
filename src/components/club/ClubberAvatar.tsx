@@ -18,6 +18,8 @@ export interface Clubber {
 
 interface Props {
   clubber: Clubber;
+  /** поднятая рука: лайк или дизлайк */
+  reaction?: { kind: 'up' | 'down'; skin: string | null } | null;
   x: number;
   y: number;
   delay?: number;
@@ -28,7 +30,7 @@ interface Props {
 }
 
 export const ClubberAvatar: React.FC<Props> = ({
-  clubber, x, y, delay = 0, isSelf, onOpenProfile, onGift,
+  clubber, x, y, delay = 0, isSelf, reaction, onOpenProfile, onGift,
 }) => {
   // на десктопе — ховер, на телефоне — тап по аватарке раскрывает иконки
   const [open, setOpen] = useState(false);
@@ -42,12 +44,24 @@ export const ClubberAvatar: React.FC<Props> = ({
 
   return (
     <div
-      className={'clubber-slot' + (open ? ' is-open' : '')}
+      className={
+        'clubber-slot' +
+        (open ? ' is-open' : '') +
+        (reaction?.kind === 'up' ? ' is-dancing' : '')
+      }
       style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${delay}s` }}
       title={hint}
       onMouseLeave={() => setOpen(false)}
     >
       {clubber.title && <span className="clubber__crown">{TITLES[clubber.title].icon}</span>}
+
+      {reaction && (
+        <span className={'clubber__hand clubber__hand--' + reaction.kind}>
+          {reaction.skin
+            ? <img src={reaction.skin} alt="" />
+            : <span>{reaction.kind === 'up' ? '👍' : '👎'}</span>}
+        </span>
+      )}
 
       <img
         className={`clubber clubber--${frame}`}
