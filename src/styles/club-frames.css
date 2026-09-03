@@ -40,7 +40,7 @@
 
 /* ---------- пустой пульт и пустой плеер ---------- */
 .dj-slot--empty {
-  width: 84px; height: 94px; border-radius: 6px; cursor: pointer;
+  width: var(--avatar-size, 58px); height: var(--avatar-size, 58px); border-radius: 6px; cursor: pointer;
   border: 2px dashed rgba(255,255,255,.55);
   background: rgba(255,255,255,.06);
   animation: emptyPulse 1.8s ease-in-out infinite;

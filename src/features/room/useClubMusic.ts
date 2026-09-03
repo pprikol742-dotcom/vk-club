@@ -40,6 +40,13 @@ export function useClubMusic(
     const url = session?.track_url;
     const startedAt = session?.track_started_at;
 
+    // без диджея за пультом в клубе тишина
+    if (!session?.dj_vk_id) {
+      player.stop();
+      setPosition(0);
+      return;
+    }
+
     // звук клипа идёт из встроенного плеера — свой не включаем
     if (session?.track_video_url) {
       player.stop();

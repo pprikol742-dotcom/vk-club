@@ -112,58 +112,64 @@
 
 /* ---------- плеер трека ---------- */
 .player {
-  position: absolute; z-index: 15; display: flex; align-items: stretch;
-  border-radius: 6px; padding: 2px; gap: 2px;
-  background: linear-gradient(180deg, rgba(58,43,85,.9), rgba(36,26,56,.9));
-  border: 1px solid rgba(120,200,255,.5);
-  box-shadow: 0 0 14px rgba(0,180,255,.4);
+  position: absolute; z-index: 15; display: flex; align-items: center;
+  border-radius: 20px; padding: 3px; gap: 4px;
+  background: rgba(18,14,32,.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(120,200,255,.35);
+  box-shadow: 0 4px 18px rgba(0,0,0,.45);
 }
 .player__vote {
-  width: 22px; border-radius: 4px; display: flex; flex-direction: column;
-  align-items: center; justify-content: space-between; padding: 2px 0;
-  font-size: 9px; font-weight: 700; color: #fff; cursor: pointer; border: 0;
+  width: 30px; height: 30px; flex: 0 0 auto; border: 0; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; font-size: 8px; font-weight: 700; color: #fff; cursor: pointer;
+  background: rgba(255,255,255,.08);
+  transition: transform .12s, background .12s;
 }
-.player__vote--down { background: linear-gradient(180deg, #ef6a4d, #c73a1c); }
-.player__vote--up   { background: linear-gradient(180deg, #62d96a, #2ea337); }
-.player__vote--gift { background: linear-gradient(180deg, #62d96a, #2ea337); }
-.player__vote[disabled] { filter: grayscale(.5); cursor: default; }
-.player__body {
-  flex: 1; min-width: 0; border-radius: 4px; padding: 3px 7px;
-  background: linear-gradient(180deg, #fff9c4, #f0e58a); color: #2a2410;
-}
+.player__vote:hover:not([disabled]) { transform: scale(1.08); }
+.player__vote:active:not([disabled]) { transform: scale(.94); }
+.player__vote--down:hover:not([disabled]) { background: rgba(239,106,77,.35); }
+.player__vote--up:hover:not([disabled])   { background: rgba(98,217,106,.35); }
+.player__vote--gift:hover:not([disabled]) { background: rgba(77,226,255,.3); }
+.player__vote span:first-child { font-size: 13px; line-height: 1; }
+.player__vote[disabled] { opacity: .45; cursor: default; }
+
+.player__body { flex: 1; min-width: 0; padding: 0 6px; color: #eaf4ff; }
 .player__artist { font-size: 11px; font-weight: 700; display: flex;
-  justify-content: space-between; align-items: center; gap: 6px; }
+  justify-content: space-between; align-items: center; gap: 6px; line-height: 1.2; }
 .player__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .player__add {
-  flex: 0 0 auto; width: 17px; height: 17px; border: 0; border-radius: 50%;
+  flex: 0 0 auto; width: 18px; height: 18px; border: 0; border-radius: 50%;
   background: linear-gradient(180deg, #4de2ff, #1b8fd6); color: #fff;
   font-size: 12px; line-height: 1; cursor: pointer;
-  box-shadow: 0 0 6px rgba(77,226,255,.7);
+  box-shadow: 0 0 8px rgba(77,226,255,.6);
 }
-.player__add.is-added, .player__add:disabled { background: #9aa4a8; box-shadow: none; cursor: default; }
-.player__title { font-size: 10px; opacity: .85; margin-bottom: 2px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player__add.is-added, .player__add:disabled { background: rgba(255,255,255,.2); box-shadow: none; cursor: default; }
+.player__title { font-size: 10px; color: rgba(234,244,255,.6); margin-bottom: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
 
 /* неоново-синий ползунок */
-.player__bar {
-  position: relative; height: 7px; border-radius: 4px; overflow: hidden;
-  background: rgba(20,30,45,.35);
-  box-shadow: inset 0 0 4px rgba(0,0,0,.4);
-}
+.player__bar { position: relative; height: 4px; border-radius: 2px; overflow: hidden;
+  background: rgba(255,255,255,.12); }
 .player__bar-fill {
-  position: absolute; inset: 0 auto 0 0; border-radius: 4px;
+  position: absolute; inset: 0 auto 0 0; border-radius: 2px;
   background: linear-gradient(90deg, #1b8fd6, #4de2ff);
   box-shadow: 0 0 8px rgba(77,226,255,.9);
   transition: width .4s linear;
 }
-.player__time { position: absolute; right: 3px; top: -12px; font-size: 9px; color: #6a5c1a; }
+.player__time { position: absolute; right: 0; top: -13px; font-size: 9px;
+  color: rgba(234,244,255,.55); }
+.player--empty .player__body { opacity: .5; }
+.player__idle { height: 26px; }
 
 /* ---------- DJ и очередь ---------- */
 .dj-slot { position: absolute; transform: translate(-50%,-50%); z-index: 14; }
 .dj-avatar {
-  width: 84px; height: 94px; border-radius: 6px; object-fit: cover;
+  width: var(--avatar-size, 58px);
+  height: var(--avatar-size, 58px);
+  border-radius: 6px; object-fit: cover;
   border: 2px solid var(--neon, #c14bff);
-  box-shadow: 0 0 16px var(--neon-soft, rgba(193,75,255,.6));
+  box-shadow: 0 6px 10px rgba(0,0,0,.45), 0 0 12px var(--neon-soft, rgba(193,75,255,.6));
 }
 .dj-headphones { position: absolute; left: 50%; top: -10px; transform: translateX(-50%); font-size: 14px; }
 .dj-button {
@@ -190,7 +196,6 @@
   border-radius: 6px; object-fit: cover; cursor: pointer;
   border: 2px solid rgba(255,255,255,.35);
   box-shadow: 0 6px 10px rgba(0,0,0,.45), 0 0 10px var(--neon-soft, rgba(193,75,255,.35));
-  animation: bob 1.6s ease-in-out infinite;
 }
 @keyframes bob { 0%,100% { margin-top: 0 } 50% { margin-top: -4px } }
 @media (prefers-reduced-motion: reduce) { .clubber { animation: none } }

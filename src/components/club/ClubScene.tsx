@@ -8,7 +8,7 @@ import { ClubFxLayer } from './ClubFxLayer';
 import { EffectsMenu } from './EffectsMenu';
 import { LayoutTuner, tuned } from './LayoutTuner';
 import { VideoScreen } from './VideoScreen';
-import { canEditWelcome, type ClubRole } from '../../config/frames';
+import { canEditWelcome, frameOf, type ClubRole } from '../../config/frames';
 
 export type { Clubber };
 
@@ -103,7 +103,13 @@ export const ClubScene: React.FC<Props> = (p) => {
         </div>
       </div>
 
-      <div className="stage" style={{ backgroundImage: `url(${room.background})` }}>
+      <div
+        className="stage"
+        style={{
+          backgroundImage: `url(${room.background})`,
+          ['--avatar-size' as any]: `${avatarSize}px`,
+        }}
+      >
         <ClubFxLayer fx={fx} />
 
         <NeonSign
@@ -129,7 +135,7 @@ export const ClubScene: React.FC<Props> = (p) => {
           onGift={p.onGiftDj}
         />
 
-        {p.videoUrl && (
+        {p.videoUrl && p.dj && (
           <VideoScreen
             url={p.videoUrl}
             offset={p.videoOffset ?? 0}
@@ -146,7 +152,12 @@ export const ClubScene: React.FC<Props> = (p) => {
             onClick={() => p.onOpenProfile(p.dj!.id)}
           >
             <span className="dj-headphones">🎧</span>
-            <img className="dj-avatar" src={p.dj.photo} alt={p.dj.name} title={p.dj.name} />
+            <img
+              className={`dj-avatar clubber--${frameOf(p.dj)}`}
+              src={p.dj.photo}
+              alt={p.dj.name}
+              title={p.dj.name}
+            />
           </div>
         ) : (
           <div

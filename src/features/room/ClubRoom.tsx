@@ -161,19 +161,29 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     };
   }, [djVkId, occupants]);
 
-  const crowd: Clubber[] = useMemo(
-    () =>
-      occupants
-        .filter((o) => o.vkId !== djVkId)
-        .map((o) => ({
-          id: String(o.vkId),
-          name: o.name,
-          photo: o.photo,
-          gender: o.gender,
-          role: o.role,
-        })),
-    [occupants, djVkId],
-  );
+  const crowd: Clubber[] = useMemo(() => {
+    const list = occupants
+      .filter((o) => o.vkId !== djVkId)
+      .map((o) => ({
+        id: String(o.vkId),
+        name: o.name,
+        photo: o.photo,
+        gender: o.gender,
+        role: o.role,
+      }));
+
+    // себя показываем всегда: presence может ещё не догнать
+    if (me && me.vkId !== djVkId && !list.some((c) => c.id === String(me.vkId))) {
+      list.unshift({
+        id: String(me.vkId),
+        name: me.name,
+        photo: me.photo,
+        gender: me.gender,
+        role: me.role,
+      });
+    }
+    return list;
+  }, [occupants, djVkId, me]);
 
   const track = useMemo(() => {
     if (!session?.dj_vk_id) return null;
