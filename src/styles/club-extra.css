@@ -61,49 +61,81 @@
 .clubber__crown { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); font-size: 14px; }
 
 /* ---------- выбор клуба ---------- */
-.clublist-page { position: relative; min-height: 100vh; padding: 30px 0 40px;
-  background: var(--bg-app); color: var(--text); }
-.clublist { max-width: 1000px; margin: 30px auto 0; padding: 0 16px; }
+.clublist-page {
+  position: relative; min-height: 100vh; padding: 22px 0 30px;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, rgba(193,75,255,.16), transparent 70%),
+    var(--bg-app);
+  color: var(--text);
+}
+.clublist { max-width: 940px; margin: 0 auto; padding: 0 16px; }
 .clublist__head {
-  border-radius: 12px 12px 0 0; padding: 14px; text-align: center;
-  background: linear-gradient(180deg, #2f7f86, #1f5f66);
-  color: rgba(255,255,255,.75); font-size: 22px;
+  border-radius: 14px 14px 0 0; padding: 14px; text-align: center;
+  background: linear-gradient(180deg, #a63bff, #6c14b8);
+  color: #fff; font-size: 24px; font-weight: 800; letter-spacing: .5px;
+  text-shadow: 0 0 10px rgba(255,120,255,.7), 0 0 24px rgba(193,75,255,.5);
+  box-shadow: 0 6px 22px rgba(140,40,220,.45);
 }
 .clublist__grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 14px;
-  padding: 14px; background: rgba(255,255,255,.03); border-radius: 0 0 12px 12px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 16px;
+  padding: 16px; border-radius: 0 0 14px 14px;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.07); border-top: 0;
 }
-.club-card { border: 0; background: none; color: var(--text); cursor: pointer;
-  text-align: left; padding: 0; }
-.club-card__title { font-size: 11px; color: #9fd6ff; margin-bottom: 4px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.club-card__cover { position: relative; aspect-ratio: 1; border-radius: 4px; overflow: hidden; }
-.club-card__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.club-card {
+  border: 0; background: none; color: var(--text); cursor: pointer;
+  text-align: left; padding: 0; display: grid; gap: 4px;
+}
+.club-card__title {
+  font-size: 11px; color: #cbb8e8; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.club-card__cover {
+  position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  transition: transform .14s, box-shadow .14s;
+}
+.club-card:hover .club-card__cover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.5), 0 0 14px rgba(193,75,255,.55);
+  border-color: rgba(193,75,255,.6);
+}
+.club-card__cover img { width: 100%; height: 100%; object-fit: cover; display: block; background: #1a1526; }
 .club-card__online {
-  position: absolute; left: 4px; bottom: 4px; padding: 1px 6px; border-radius: 8px;
-  background: rgba(0,0,0,.6); font-size: 11px;
+  position: absolute; left: 5px; bottom: 5px; padding: 1px 7px 1px 5px; border-radius: 9px;
+  background: rgba(0,0,0,.65); font-size: 11px; font-weight: 600; color: #fff;
 }
-.club-card__owner { margin-top: 4px; font-size: 11px; color: var(--accent); }
-.club-card__track { font-size: 11px; color: #6fa8ff;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.club-card__owner {
+  font-size: 11px; font-weight: 600; color: #ff5fc8; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.club-card__track {
+  font-size: 11px; color: #6fb6ff; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 .create-club-tab {
-  position: fixed; left: 0; top: 40%; z-index: 30;
+  position: fixed; left: 0; top: 34%; z-index: 30;
   writing-mode: vertical-rl; transform: rotate(180deg);
-  border: 0; border-radius: 0 10px 10px 0; padding: 16px 8px;
-  background: linear-gradient(180deg, #b44cff, #7d1bc7); color: #fff;
-  font-size: 13px; cursor: pointer;
+  border: 0; border-radius: 0 12px 12px 0; padding: 18px 9px;
+  background: linear-gradient(180deg, #c14bff, #7d1bc7); color: #fff;
+  font-size: 13px; font-weight: 600; letter-spacing: .3px; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(140,40,220,.5);
 }
-.page-footer { margin-top: 30px; text-align: center; font-size: 12px; color: var(--text-dim); }
+.create-club-tab:hover { filter: brightness(1.12); }
+.page-footer { margin-top: 26px; text-align: center; font-size: 12px; color: var(--text-dim); }
+.page-footer b { color: var(--accent); font-weight: 600; }
 
 /* ---------- создание клуба ---------- */
 .create-club__label {
   position: relative; margin-bottom: 22px; padding: 10px; text-align: center;
-  color: #4ec8cf; font-size: 15px; border: 1px solid rgba(78,200,207,.5); border-radius: 6px;
+  color: #e2b8ff; font-size: 15px; font-weight: 600;
+  border: 1px solid rgba(193,75,255,.55); border-radius: 8px;
+  background: rgba(193,75,255,.08);
 }
 .create-club__label::after {
   content: ''; position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%);
-  border: 9px solid transparent; border-top-color: rgba(78,200,207,.5); border-bottom: 0;
+  border: 9px solid transparent; border-top-color: rgba(193,75,255,.55); border-bottom: 0;
 }
 .community-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .community { border: 0; background: none; cursor: pointer; color: var(--text); padding: 0; }
@@ -145,3 +177,15 @@
 }
 /* аватарка клуба не должна расплываться */
 .club-card__cover img { background: #1a1526; }
+
+/* кнопка ежедневной награды на витрине */
+.daily-fab {
+  position: fixed; right: 18px; bottom: 18px; z-index: 40;
+  width: 52px; height: 52px; border: 0; border-radius: 50%;
+  background: linear-gradient(180deg, #ffb524, #e2701a);
+  color: #fff; font-size: 22px; cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0,0,0,.5), 0 0 16px rgba(255,181,36,.6);
+  animation: fabPulse 2.6s ease-in-out infinite;
+}
+@keyframes fabPulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.07) } }
+@media (prefers-reduced-motion: reduce) { .daily-fab { animation: none } }

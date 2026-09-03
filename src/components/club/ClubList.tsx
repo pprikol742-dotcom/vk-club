@@ -50,6 +50,6 @@ export const ClubList: React.FC<Props> = ({ clubs, votes, onEnter, onCreate, onH
       </div>
     </div>
 
-    <footer className="page-footer">Разработчик: ▶ В Клубе</footer>
+    <footer className="page-footer">Разработчик: <b>▶ В Клубе</b></footer>
   </div>
 );
