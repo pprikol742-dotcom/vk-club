@@ -275,11 +275,11 @@
 
 /* танцует только тот, кто поставил лайк: ровные прыжки без наклонов */
 .clubber-slot.is-dancing {
-  animation: dance 0.44s steps(1, end) infinite;
+  animation: dance 0.68s steps(1, end) infinite;
 }
 @keyframes dance {
   0%   { transform: translate(-50%,-50%) }
-  50%  { transform: translate(-50%,-64%) }
+  50%  { transform: translate(-50%,-62%) }
   100% { transform: translate(-50%,-50%) }
 }
 

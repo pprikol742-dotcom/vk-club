@@ -53,6 +53,31 @@ export const CROWD_SLOTS = [
   { x: 16, y: 24 }, { x: 42, y: 22 }, { x: 68, y: 22 }, { x: 4,  y: 26 },
 ];
 
+/**
+ * Каждому клабберу — своё место на танцполе.
+ * Слот выбирается по его id, поэтому человек не прыгает по залу
+ * при каждом обновлении, и двое не встают в одну точку.
+ */
+export function assignSlots<T extends { id: string }>(people: T[]) {
+  const used = new Set<number>();
+  const total = CROWD_SLOTS.length;
+
+  return people.slice(0, total).map((p) => {
+    // ровный разброс по номеру: близкие id не липнут друг к другу
+    let n = 0;
+    for (const ch of p.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
+    let slot = n % total;
+
+    // место занято — берём ближайшее свободное
+    for (let step = 0; step < total && used.has(slot); step++) {
+      slot = (slot + 1) % total;
+    }
+    used.add(slot);
+
+    return { person: p, slot: CROWD_SLOTS[slot], index: slot };
+  });
+}
+
 /** Ключи, которые можно двигать в режиме настройки раскладки. */
 export const TUNABLE = ['sign', 'player', 'djSlot', 'djButton', 'danceFloor', 'giftSpot', 'videoScreen'] as const;
 export type TunableKey = typeof TUNABLE[number];

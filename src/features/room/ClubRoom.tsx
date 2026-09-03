@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { useClubRealtime, type PresenceMe } from "./useClubRealtime";
 import { getLaunchParams } from "../../lib/vkBridge";
@@ -23,6 +23,8 @@ import type { ClubTrack } from "../../lib/music";
 
 /** ID приложения берём из окружения — иначе ВК ответит «Wrong app id». */
 const APP_ID = Number(import.meta.env.VITE_VK_APP_ID ?? 0);
+/** Дольше шести минут за пультом не задерживаемся. */
+const MAX_SET_SEC = 360;
 const APP_URL = `https://vk.com/app${APP_ID}`;
 
 /** Подарки клабберу и диджею — иконки берём из твоего giftIcons. */
@@ -91,6 +93,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [welcome, setWelcome] = useState<string>((club as any)?.welcome_text ?? "");
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
+  const djActionRef = useRef<((a: "join" | "advance") => void) | null>(null);
 
   /** роль в клубе: хозяин сообщества — жёлтая рамка */
   const myRole: ClubRole = useMemo(() => {
@@ -184,6 +187,25 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       gifts: (session as any).gifts ?? 0,
     };
   }, [session, musicPosition]);
+
+  /** Сет закончился или упёрся в лимит — уступаем пульт следующему. */
+  useEffect(() => {
+    if (!club || !profile) return;
+    if ((session as any)?.dj_vk_id !== profile.vk_id) return;
+
+    const startedAt = Date.parse((session as any)?.track_started_at ?? '');
+    if (!startedAt) return;
+
+    const trackSec = (session as any)?.track_duration_sec ?? MAX_SET_SEC;
+    const limit = Math.min(trackSec || MAX_SET_SEC, MAX_SET_SEC);
+    const left = limit * 1000 - (Date.now() - startedAt);
+
+    const timer = setTimeout(() => {
+      djActionRef.current?.('advance');
+    }, Math.max(1000, left));
+
+    return () => clearTimeout(timer);
+  }, [club, profile, session]);
 
   /** Реакции по строковым id — в таком виде их ждёт сцена. */
   const reactionMap = useMemo(() => {
@@ -290,6 +312,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     },
     [club],
   );
+
+  djActionRef.current = djAction;
 
   /** «Стать DJ» — сперва выбираем, что заряжать. */
   const pickTrack = useCallback(

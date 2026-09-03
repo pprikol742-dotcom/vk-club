@@ -1,5 +1,5 @@
 import React from 'react';
-import { ROOMS, LAYOUT, CROWD_SLOTS, type RoomId } from '../../config/clubTheme';
+import { ROOMS, LAYOUT, CROWD_SLOTS, assignSlots, type RoomId } from '../../config/clubTheme';
 import { useUi } from '../../store/uiStore';
 import { TrackPlayer, type TrackState } from './TrackPlayer';
 import { ClubberAvatar, type Clubber } from './ClubberAvatar';
@@ -158,15 +158,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         )}
 
         {/* кнопка у пульта */}
-        {meIsDj ? (
-          <button
-            className="dj-button dj-button--invite"
-            style={tuned('djButton', tweak)}
-            onClick={p.onInviteFriends}
-          >
-            Позвать<br />друзей
-          </button>
-        ) : p.queuePosition === null ? (
+        {meIsDj ? null : p.queuePosition === null ? (
           <button
             className="dj-button"
             style={tuned('djButton', tweak)}
@@ -200,13 +192,13 @@ export const ClubScene: React.FC<Props> = (p) => {
             ['--avatar-size' as any]: `${avatarSize}px`,
           }}
         >
-          {p.crowd.slice(0, CROWD_SLOTS.length).map((c, i) => (
+          {assignSlots(p.crowd).map(({ person: c, slot, index }) => (
             <ClubberAvatar
               key={c.id}
               clubber={c}
-              x={CROWD_SLOTS[i].x}
-              y={CROWD_SLOTS[i].y}
-              delay={(i % 5) * 0.18}
+              x={slot.x}
+              y={slot.y}
+              delay={(index % 5) * 0.18}
               isSelf={c.id === p.myId}
               reaction={p.reactions?.[c.id] ?? null}
               onOpenProfile={p.onOpenProfile}
