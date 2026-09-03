@@ -88,7 +88,7 @@ export const useUi = create<UiState>()(
       fxMenuOpen: false,
       tunerOpen: false,
       tweak: {},
-      avatarSize: 58,
+      avatarSize: 68,
       lastResult: null,
       open: (m) => set({ modal: m }),
       close: () => set({ modal: null }),
@@ -104,14 +104,15 @@ export const useUi = create<UiState>()(
       toggleTuner: () => set((s) => ({ tunerOpen: !s.tunerOpen })),
       setTweak: (key, patch) =>
         set((s) => ({ tweak: { ...s.tweak, [key]: { ...s.tweak[key], ...patch } } })),
-      resetTweak: () => set({ tweak: {}, avatarSize: 58 }),
+      resetTweak: () => set({ tweak: {}, avatarSize: 68 }),
       setAvatarSize: (px) => set({ avatarSize: px }),
       showResult: (r) => set({ lastResult: r, modal: 'trackResult' }),
     }),
     {
-      name: 'club-ui',
+      name: 'club-ui-v2',
       // между сессиями храним только настройки света и звука
-      partialize: (s) => ({ fx: s.fx, muted: s.muted, tweak: s.tweak, avatarSize: s.avatarSize }),
+      // раскладка одна для всех — храним только свет и звук
+      partialize: (s) => ({ fx: s.fx, muted: s.muted }),
     },
   ),
 );

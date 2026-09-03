@@ -34,16 +34,15 @@ export const LAYOUT = {
   topBadge:  { right: '0%',  top: '1.5%' },
 
   /** вывеска в неоновой рамке */
-  sign:      { left: '48.5%', top: '21%', width: '32%' },
-  discoBall: { left: '50.3%', top: '41%' },
-  player:    { left: '40.5%', top: '32%', width: '45%' },
-  djSlot:    { left: '50.5%', top: '43%' },
-  djButton:  { left: '52%',   top: '58%' },
-  giftSpot:  { left: '33%',   top: '66%' },
-  decorSlot: { right: '8%',   top: '25%' },
-  danceFloor:{ left: '0%',    top: '58%', width: '96%', height: '40%' },
-  /** экран с клипом посреди зала */
-  videoScreen:{ left: '50%',  top: '33%', width: '38%' },
+  sign:       { left: '48.5%', top: '21%',   width: '32%' },
+  discoBall:  { left: '50.3%', top: '41%' },
+  player:     { left: '0%',    top: '100%',  width: '99.5%' },
+  djSlot:     { left: '50%',   top: '41.5%' },
+  djButton:   { left: '52%',   top: '97.5%' },
+  giftSpot:   { left: '33%',   top: '66%' },
+  decorSlot:  { right: '8%',   top: '25%' },
+  videoScreen:{ left: '50.5%', top: '17%',   width: '46%' },
+  danceFloor: { left: '100%',  top: '100%',  width: '96%', height: '28%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
