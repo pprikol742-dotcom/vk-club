@@ -273,14 +273,16 @@
   100% { opacity: 0; transform: scaleX(-1) translateY(-4px) scale(.95) }
 }
 
-/* танцует только тот, кто поставил лайк */
-.clubber-slot.is-dancing { animation: dance 0.5s ease-in-out infinite; }
-@keyframes dance {
-  0%, 100% { transform: translate(-50%,-50%) rotate(-6deg) }
-  25%      { transform: translate(-50%,-58%) rotate(0deg) }
-  50%      { transform: translate(-50%,-50%) rotate(6deg) }
-  75%      { transform: translate(-50%,-56%) rotate(0deg) }
+/* танцует только тот, кто поставил лайк: ровные прыжки без наклонов */
+.clubber-slot.is-dancing {
+  animation: dance 0.44s steps(1, end) infinite;
 }
+@keyframes dance {
+  0%   { transform: translate(-50%,-50%) }
+  50%  { transform: translate(-50%,-64%) }
+  100% { transform: translate(-50%,-50%) }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .clubber-slot.is-dancing, .clubber__hand { animation: none }
 }
