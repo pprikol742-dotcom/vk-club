@@ -147,11 +147,21 @@ export const ClubScene: React.FC<Props> = (p) => {
         {/* место диджея */}
         {p.dj ? (
           <div
-            className="dj-slot"
+            className={
+              'dj-slot' +
+              (p.reactions?.[p.dj.id]?.kind === 'up' ? ' is-dancing' : '')
+            }
             style={tuned('djSlot', tweak)}
             onClick={() => p.onOpenProfile(p.dj!.id)}
           >
             <span className="dj-headphones">🎧</span>
+            {p.reactions?.[p.dj.id] && (
+              <span className={'clubber__hand clubber__hand--' + p.reactions[p.dj.id].kind}>
+                {p.reactions[p.dj.id].skin
+                  ? <img src={p.reactions[p.dj.id].skin!} alt="" />
+                  : <span>{p.reactions[p.dj.id].kind === 'up' ? '👍' : '👎'}</span>}
+              </span>
+            )}
             {p.dj.photo ? (
               <img
                 className={`dj-avatar clubber--${frameOf(p.dj)}`}

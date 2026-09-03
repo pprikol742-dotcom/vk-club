@@ -286,3 +286,6 @@
 @media (prefers-reduced-motion: reduce) {
   .clubber-slot.is-dancing, .clubber__hand { animation: none }
 }
+
+/* диджей за пультом тоже пляшет */
+.dj-slot.is-dancing { animation: dance 0.68s steps(1, end) infinite; }
