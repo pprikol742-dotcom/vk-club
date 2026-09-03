@@ -1,5 +1,5 @@
 import React from 'react';
-import { ROOMS, LAYOUT, CROWD_SLOTS, assignSlots, type RoomId } from '../../config/clubTheme';
+import { ROOMS, LAYOUT, assignSlots, type RoomId } from '../../config/clubTheme';
 import { useUi } from '../../store/uiStore';
 import { TrackPlayer, type TrackState } from './TrackPlayer';
 import { ClubberAvatar, type Clubber } from './ClubberAvatar';
