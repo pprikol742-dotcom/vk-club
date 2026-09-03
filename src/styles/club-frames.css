@@ -19,7 +19,19 @@
 .profile__photo.clubber--male { border: 3px solid; }
 
 /* ---------- действия на аватаре ---------- */
-.clubber-slot .clubber { border-width: 2px; border-style: solid; cursor: pointer; }
+/* слот стоит на своём месте, аватарка внутри — обычным потоком */
+.clubber-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  line-height: 0;
+}
+.clubber-slot .clubber {
+  position: static;
+  transform: none;
+  display: block;
+  border-width: 2px; border-style: solid; cursor: pointer;
+}
 .clubber__actions {
   position: absolute; left: 50%; top: -18px; transform: translateX(-50%);
   display: flex; gap: 4px; opacity: 0; pointer-events: none; transition: opacity .12s;

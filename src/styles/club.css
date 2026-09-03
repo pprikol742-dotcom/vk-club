@@ -148,17 +148,32 @@
 .player__title { font-size: 10px; color: rgba(234,244,255,.6); margin-bottom: 3px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
 
-/* неоново-синий ползунок */
-.player__bar { position: relative; height: 4px; border-radius: 2px; overflow: hidden;
-  background: rgba(255,255,255,.12); }
+/* полоса трека: серый жёлоб, голубая заливка и круглая ручка */
+.player__bar {
+  position: relative; height: 8px; border-radius: 4px;
+  background: linear-gradient(180deg, #8f97a3, #b8bfc9);
+  border: 1px solid rgba(255,255,255,.35);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.35);
+  margin: 2px 9px 2px 0;
+}
 .player__bar-fill {
-  position: absolute; inset: 0 auto 0 0; border-radius: 2px;
-  background: linear-gradient(90deg, #1b8fd6, #4de2ff);
-  box-shadow: 0 0 8px rgba(77,226,255,.9);
+  position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px 0 0 4px;
+  background: linear-gradient(180deg, #4ec3ff, #0a84ff);
+  box-shadow: 0 0 6px rgba(10,132,255,.7);
   transition: width .4s linear;
+}
+/* ручка едет по правому краю заливки */
+.player__bar-fill::after {
+  content: ''; position: absolute; right: -8px; top: 50%;
+  width: 15px; height: 15px; transform: translateY(-50%);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff, #dfe3e8);
+  border: 1px solid rgba(0,0,0,.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,.45);
 }
 .player__time { position: absolute; right: 0; top: -13px; font-size: 9px;
   color: rgba(234,244,255,.55); }
+
 .player--empty .player__body { opacity: .5; }
 .player__idle { height: 26px; }
 
@@ -287,4 +302,13 @@
   .app { flex-direction: column; }
   .chat { width: 100%; flex: 1 1 auto; padding-top: 0; }
   .stage-wrap { flex: 0 0 46vh; }
+}
+
+
+/* аватарка без фото */
+.clubber--letter {
+  display: grid; place-items: center;
+  background: linear-gradient(180deg, #4a3d6b, #2c2442);
+  color: #e9e6f2; font-weight: 700; font-size: 20px;
+  border-width: 2px; border-style: solid;
 }

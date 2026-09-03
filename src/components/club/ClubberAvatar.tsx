@@ -63,12 +63,21 @@ export const ClubberAvatar: React.FC<Props> = ({
         </span>
       )}
 
-      <img
-        className={`clubber clubber--${frame}`}
-        src={clubber.photo}
-        alt={clubber.name}
-        onClick={() => setOpen((s) => !s)}
-      />
+      {clubber.photo ? (
+        <img
+          className={`clubber clubber--${frame}`}
+          src={clubber.photo}
+          alt={clubber.name}
+          onClick={() => setOpen((s) => !s)}
+        />
+      ) : (
+        <div
+          className={`clubber clubber--${frame} clubber--letter`}
+          onClick={() => setOpen((s) => !s)}
+        >
+          {clubber.name.trim().charAt(0).toUpperCase() || '?'}
+        </div>
+      )}
 
       <div className="clubber__actions">
         {canGift(!!isSelf) && (

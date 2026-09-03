@@ -152,12 +152,18 @@ export const ClubScene: React.FC<Props> = (p) => {
             onClick={() => p.onOpenProfile(p.dj!.id)}
           >
             <span className="dj-headphones">🎧</span>
-            <img
-              className={`dj-avatar clubber--${frameOf(p.dj)}`}
-              src={p.dj.photo}
-              alt={p.dj.name}
-              title={p.dj.name}
-            />
+            {p.dj.photo ? (
+              <img
+                className={`dj-avatar clubber--${frameOf(p.dj)}`}
+                src={p.dj.photo}
+                alt={p.dj.name}
+                title={p.dj.name}
+              />
+            ) : (
+              <div className={`dj-avatar clubber--${frameOf(p.dj)} clubber--letter`} title={p.dj.name}>
+                {p.dj.name.trim().charAt(0).toUpperCase() || '?'}
+              </div>
+            )}
           </div>
         ) : (
           <div

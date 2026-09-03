@@ -448,8 +448,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
 
   if (!club || !profile) return null;
 
-  const isDj = djVkId === profile.vk_id;
-
   return (
     <div onPointerDown={unlockAudio}>
       <ClubPage
@@ -516,15 +514,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 "👍"
               )}
             </button>
-            {isDj && (
-              <button
-                className="btn-round"
-                title="Завершить сет"
-                onClick={() => djAction("advance")}
-              >
-                ⏭
-              </button>
-            )}
           </>
         }
         overlay={
