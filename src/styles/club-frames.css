@@ -19,12 +19,21 @@
 .profile__photo.clubber--male { border: 3px solid; }
 
 /* ---------- действия на аватаре ---------- */
-/* слот стоит на своём месте, аватарка внутри — обычным потоком */
+/* слот стоит на своём месте, аватарка внутри — обычным потоком.
+   При появлении клаббер вплывает из левого нижнего угла зала. */
 .clubber-slot {
   position: absolute;
   transform: translate(-50%, -50%);
   cursor: pointer;
   line-height: 0;
+  animation: walkIn .7s ease-out both;
+}
+@keyframes walkIn {
+  from { opacity: 0; transform: translate(-50%, -50%) translate(-40vw, 30vh) scale(.6) }
+  to   { opacity: 1; transform: translate(-50%, -50%) translate(0, 0) scale(1) }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clubber-slot { animation: none }
 }
 .clubber-slot .clubber {
   position: static;

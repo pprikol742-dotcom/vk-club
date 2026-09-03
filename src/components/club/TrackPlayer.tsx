@@ -12,84 +12,96 @@ export interface TrackState {
 }
 
 interface Props {
-  /** null — за пультом никого, плеер пустой */
+  /** null — за пультом никого */
   track: TrackState | null;
   style?: React.CSSProperties;
+  /** место игрока в очереди, null — не в очереди */
+  queuePosition: number | null;
+  /** игрок сам за пультом */
+  isDj: boolean;
   onVote: (v: 'up' | 'down') => void;
   onGift: () => void;
-  /** добавить трек в свой плейлист */
   onAdd?: () => void;
+  onBecomeDj: () => void;
+  onQueue: () => void;
 }
 
-const fmtLeft = (pos: number, dur: number) => {
-  const left = Math.max(0, dur - pos);
-  const m = Math.floor(left / 60);
-  const s = Math.floor(left % 60).toString().padStart(2, '0');
-  return `-${m}.${s}`;
+const mmss = (sec: number) => {
+  const s = Math.max(0, Math.floor(sec));
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 };
 
-export const TrackPlayer: React.FC<Props> = ({ track, style, onVote, onGift, onAdd }) => {
+export const TrackPlayer: React.FC<Props> = ({
+  track, style, queuePosition, isDj, onVote, onGift, onAdd, onBecomeDj, onQueue,
+}) => {
   const [added, setAdded] = React.useState(false);
-  const empty = !track;
   React.useEffect(() => { setAdded(false); }, [track?.artist, track?.title]);
-  const pct = track && track.duration ? Math.min(100, (track.position / track.duration) * 100) : 0;
+
+  const empty = !track;
+  const pct = track?.duration ? Math.min(100, (track.position / track.duration) * 100) : 0;
 
   return (
     <div className={'player' + (empty ? ' player--empty' : '')} style={style}>
-      <button
-        className="player__vote player__vote--down"
-        disabled={empty || !!track?.myVote}
-        onClick={() => onVote('down')}
-        title="Не нравится"
-      >
-        <span>👎</span>
-        <span>{track?.dislikes ?? 0}</span>
-      </button>
+      <div className="player__top">
+        <span className="player__note">♪</span>
 
-      <div className="player__body">
-        {empty ? (
-          <div className="player__idle" />
-        ) : (
-          <>
-            <div className="player__artist">
-              <span className="player__name">{track!.artist}</span>
-              <button
-                className={'player__add' + (added ? ' is-added' : '')}
-                title={added ? 'Трек у тебя в плейлисте' : 'Добавить к себе'}
-                disabled={added || !onAdd}
-                onClick={() => { onAdd?.(); setAdded(true); }}
-              >
-                {added ? '✓' : '+'}
-              </button>
-            </div>
-            <div className="player__title">{track!.title}</div>
-            <div className="player__bar">
-              <div className="player__bar-fill" style={{ width: `${pct}%` }} />
-              <span className="player__time">{fmtLeft(track!.position, track!.duration)}</span>
-            </div>
-          </>
-        )}
+        <div className="player__meta">
+          <div className="player__title">{track?.title ?? 'Пульт свободен'}</div>
+          <div className="player__artist">{track?.artist ?? 'Вставай за вертушки'}</div>
+        </div>
+
+        <div className="player__controls">
+          <button
+            className="player__btn"
+            title="Не нравится"
+            disabled={empty || !!track?.myVote}
+            onClick={() => onVote('down')}
+          >
+            👎<i>{track?.dislikes ?? 0}</i>
+          </button>
+          <button
+            className="player__btn"
+            title="Нравится"
+            disabled={empty || !!track?.myVote}
+            onClick={() => onVote('up')}
+          >
+            👍<i>{track?.likes ?? 0}</i>
+          </button>
+          <button className="player__btn" title="Угостить DJ" disabled={empty} onClick={onGift}>
+            🍹<i>{track?.gifts ?? 0}</i>
+          </button>
+          <button
+            className={'player__btn player__btn--add' + (added ? ' is-added' : '')}
+            title={added ? 'Трек у тебя в плейлисте' : 'Добавить к себе'}
+            disabled={empty || added || !onAdd}
+            onClick={() => { onAdd?.(); setAdded(true); }}
+          >
+            {added ? '✓' : '+'}
+          </button>
+
+          {/* вместо «плей» — место за пультом */}
+          {isDj ? (
+            <span className="player__dj player__dj--live" title="Ты за пультом">🎧</span>
+          ) : queuePosition === null ? (
+            <button className="player__dj" title="Стать диджеем" onClick={onBecomeDj}>
+              Стать<br />DJ
+            </button>
+          ) : (
+            <button className="player__dj player__dj--queue" title="Твоя очередь" onClick={onQueue}>
+              Ты {queuePosition}
+            </button>
+          )}
+        </div>
       </div>
 
-      <button
-        className="player__vote player__vote--up"
-        disabled={empty || !!track?.myVote}
-        onClick={() => onVote('up')}
-        title="Нравится"
-      >
-        <span>👍</span>
-        <span>{track?.likes ?? 0}</span>
-      </button>
-
-      <button
-        className="player__vote player__vote--gift"
-        disabled={empty}
-        onClick={onGift}
-        title="Угостить DJ"
-      >
-        <span>🍹</span>
-        <span>{track?.gifts ?? 0}</span>
-      </button>
+      <div className="player__bottom">
+        <div className="player__bar">
+          <div className="player__bar-fill" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="player__time">
+          {mmss(track?.position ?? 0)} <span>/ {mmss(track?.duration ?? 0)}</span>
+        </div>
+      </div>
     </div>
   );
 };

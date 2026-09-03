@@ -98,6 +98,8 @@ export const ClubScene: React.FC<Props> = (p) => {
         </div>
 
         {/* топ клуба */}
+        <div className="crowd-count" title="Человек в зале">👥 {p.crowd.length + (p.dj ? 1 : 0)}</div>
+
         <div className="top-badge" style={{ right: LAYOUT.topBadge.right, top: LAYOUT.topBadge.top }} onClick={p.onTop}>
           ТОП<br />КЛУБА
         </div>
@@ -133,6 +135,10 @@ export const ClubScene: React.FC<Props> = (p) => {
           onVote={p.onVote}
           onAdd={p.onAddTrack}
           onGift={p.onGiftDj}
+          queuePosition={p.queuePosition}
+          isDj={meIsDj}
+          onBecomeDj={p.onBecomeDj}
+          onQueue={p.onQueue}
         />
 
         {p.videoUrl && p.dj && (
@@ -185,25 +191,6 @@ export const ClubScene: React.FC<Props> = (p) => {
         )}
 
         {/* кнопка у пульта */}
-        {meIsDj ? null : p.queuePosition === null ? (
-          <button
-            className="dj-button"
-            style={tuned('djButton', tweak)}
-            onClick={p.onBecomeDj}
-          >
-            Стать DJ
-          </button>
-        ) : (
-          <button
-            className="dj-button dj-button--queue"
-            style={tuned('djButton', tweak)}
-            onClick={p.onQueue}
-          >
-            <span className="dj-button__bolt" onClick={(e) => { e.stopPropagation(); p.onQueue(); }}>⚡</span>
-            Ты {p.queuePosition}
-          </button>
-        )}
-
         {p.floorGift && (
           <div className="gift-on-floor" style={tuned('giftSpot', tweak)}>
             {p.floorGift}
