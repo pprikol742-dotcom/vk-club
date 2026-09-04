@@ -42,14 +42,15 @@ export const LAYOUT = {
   giftSpot:   { left: '33%',   top: '66%' },
   decorSlot:  { right: '8%',   top: '25%' },
   videoScreen:{ left: '50.5%', top: '17%',   width: '46%' },
-  danceFloor: { left: '100%',  top: '100%',  width: '96%', height: '28%' },
+  danceFloor: { left: '2%',    top: '70%',   width: '96%', height: '28%' },
 } as const;
 
 /** Позиции клабберов на танцполе (проценты внутри danceFloor) */
 export const CROWD_SLOTS = [
-  { x: 9,  y: 52 }, { x: 23, y: 78 }, { x: 37, y: 50 }, { x: 50, y: 80 },
-  { x: 63, y: 50 }, { x: 77, y: 78 }, { x: 90, y: 52 }, { x: 96, y: 26 },
-  { x: 16, y: 24 }, { x: 42, y: 22 }, { x: 68, y: 22 }, { x: 4,  y: 26 },
+  { x: 10, y: 30 }, { x: 26, y: 26 }, { x: 42, y: 28 }, { x: 58, y: 26 },
+  { x: 74, y: 30 }, { x: 90, y: 28 },
+  { x: 6,  y: 72 }, { x: 22, y: 76 }, { x: 38, y: 70 }, { x: 54, y: 76 },
+  { x: 70, y: 72 }, { x: 88, y: 74 },
 ];
 
 /**
