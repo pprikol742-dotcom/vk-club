@@ -70,7 +70,13 @@ export const ClubScene: React.FC<Props> = (p) => {
       <div className="hud">
         {/* панель действий */}
         <div className="actionbar" style={{ left: LAYOUT.actionBar.left, top: LAYOUT.actionBar.top }}>
-          <button className="btn-exit" onClick={p.onExit}>🚪 ВЫХОД</button>
+          <button
+            className={'btn-exit' + (meIsDj ? ' btn-exit--locked' : '')}
+            title={meIsDj ? 'Пока ты за пультом, выйти нельзя' : 'Выйти из клуба'}
+            onClick={p.onExit}
+          >
+            {meIsDj ? '🔒' : '🚪'} ВЫХОД
+          </button>
           <button className="btn-round" title="Декор клуба" onClick={p.onDecorate}>♠</button>
           <button className="btn-round" title="Группа клуба" onClick={() => useUi.getState().open('clubGroup')}>⬆</button>
           <button
@@ -94,7 +100,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         {/* монеты */}
         <div className="coins" style={{ right: LAYOUT.coins.right, top: LAYOUT.coins.top }} onClick={p.onCoins}>
           <span className="coins__icon">▶</span>
-          {p.coins}
+          {Number.isFinite(p.coins) ? p.coins : '∞'}
         </div>
 
         {/* топ клуба */}

@@ -17,6 +17,7 @@ import type { GiftItem } from "../../components/modals/ClubModals";
 import type { ClubberProfile } from "../../components/modals/ProfileModal";
 import { genderFromVk, type ClubRole } from "../../config/frames";
 import { addToMyTracks } from "../../lib/library";
+import { CoinShopModal } from "../shop/CoinShopModal";
 import { useClubMusic } from "./useClubMusic";
 import { MusicPickerModal } from "./MusicPickerModal";
 import type { ClubTrack } from "../../lib/music";
@@ -52,7 +53,7 @@ const DJ_GIFTS = withIcons([
   { id: "chifir", name: "Чифир", price: 6 },
 ]);
 
-type SideModal = "hands" | "decorate" | "leaderboard" | "music" | null;
+type SideModal = "hands" | "decorate" | "leaderboard" | "music" | "coins" | null;
 
 /** Достаём настоящий текст ошибки из ответа Edge Function. */
 async function describeError(e: unknown): Promise<string> {
@@ -79,6 +80,7 @@ async function describeError(e: unknown): Promise<string> {
 export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const leaveClub = onLeaveClub ?? (() => useAppStore.setState({ club: null } as any));
   const profile = useAppStore((s) => s.profile);
+  const setSession = useAppStore((s) => s.setSession);
   const club = useAppStore((s) => s.club);
   const session = useAppStore((s) => s.session);
   const chatMessages = useAppStore((s) => s.chatMessages);
@@ -197,6 +199,28 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       gifts: (session as any).gifts ?? 0,
     };
   }, [session, musicPosition]);
+
+  /** Realtime иногда молчит — подстраховываемся опросом сессии. */
+  useEffect(() => {
+    if (!club) return;
+    let stop = false;
+
+    const pull = async () => {
+      const { data } = await supabase
+        .from("club_sessions")
+        .select("*")
+        .eq("club_id", club.id)
+        .maybeSingle();
+      if (!stop && data) setSession(data as any);
+    };
+
+    pull();
+    const timer = setInterval(pull, 4000);
+    return () => {
+      stop = true;
+      clearInterval(timer);
+    };
+  }, [club, setSession]);
 
   /** Сет закончился или упёрся в лимит — уступаем пульт следующему. */
   useEffect(() => {
@@ -461,7 +485,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         banned={banned}
         myId={String(profile.vk_id)}
         myRole={myRole}
-        coins={profile.coins}
+        coins={(profile as any).unlimited_coins ? Infinity : profile.coins}
         votes={(profile as any).votes ?? 0}
         track={track}
         dj={dj}
@@ -479,7 +503,13 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         djGifts={DJ_GIFTS}
         playerGifts={PLAYER_GIFTS}
         giftBusy={giftBusy}
-        onExit={leaveClub}
+        onExit={() => {
+          if (djVkId === profile.vk_id) {
+            alert("Ты за пультом — сначала доиграй трек или уступи очередь");
+            return;
+          }
+          leaveClub();
+        }}
         onBecomeDj={() => setSideModal("music")}
         onVote={vote}
         onAddTrack={addCurrentTrack}
@@ -489,7 +519,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         onSendMessage={sendChat}
         onClap={() => {}}
         onDecorate={() => setSideModal("decorate")}
-        onOpenShop={() => setSideModal("hands")}
+        onOpenShop={() => setSideModal("coins")}
         onOpenTop={() => setSideModal("leaderboard")}
         onOpenProfile={loadProfile}
         onCloseProfile={() => setOpenedProfile(null)}
@@ -528,6 +558,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       {sideModal === "decorate" && <DecorateClubModal onClose={() => setSideModal(null)} />}
       {sideModal === "leaderboard" && (
         <LeaderboardModal clubId={club.id} onClose={() => setSideModal(null)} />
+      )}
+      {sideModal === "coins" && (
+        <CoinShopModal
+          vkId={profile.vk_id}
+          coins={profile.coins}
+          unlimited={Boolean((profile as any).unlimited_coins)}
+          onClose={() => setSideModal(null)}
+          onBought={(total) => useAppStore.setState({ profile: { ...profile, coins: total } } as any)}
+        />
       )}
       {sideModal === "music" && (
         <MusicPickerModal
