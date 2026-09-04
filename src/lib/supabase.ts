@@ -37,3 +37,4 @@ export async function callEdgeFunction<T = unknown>(
   return data as T;
 }
 
+
