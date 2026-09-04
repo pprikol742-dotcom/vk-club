@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import bridge from '@vkontakte/vk-bridge';
 import { Modal } from '../../components/modals/ClubModals';
 import { supabase } from '../../lib/supabase';
+import { Icon, ICONS, PACK_ICONS } from '../../components/ui/Icon';
 
 export interface CoinPack {
   id: string;
@@ -68,6 +69,7 @@ export const CoinShopModal: React.FC<{
     <Modal title="Монеты" onClose={onClose} width={430}>
       <div className="modal__body">
         <div className="shop__balance">
+          <Icon className="shop__coin" src={ICONS.coin} fallback="🪙" />
           У тебя <b>{unlimited ? '∞' : coins}</b> монет
         </div>
 
@@ -85,8 +87,9 @@ export const CoinShopModal: React.FC<{
                 onClick={() => buy(p)}
               >
                 {p.best && <span className="shop__badge">выгодно</span>}
+                <Icon className="shop__img" src={PACK_ICONS[p.id]} fallback="💰" />
                 <span className="shop__coins">
-                  <i className="gift__coin" /> {p.coins}
+                  <Icon className="shop__coin" src={ICONS.coin} fallback="🪙" /> {p.coins}
                 </span>
                 <span className="shop__price">
                   {busy === p.id ? '…' : `${p.votes} голосов`}

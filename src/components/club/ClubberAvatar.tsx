@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TITLES, type TitleId } from '../../config/titles';
 import { frameOf, FRAME_TITLE, canGift, type ClubRole, type Gender } from '../../config/frames';
+import { Icon, ICONS } from '../ui/Icon';
 
 export interface Clubber {
   id: string;
@@ -57,9 +58,14 @@ export const ClubberAvatar: React.FC<Props> = ({
 
       {reaction && (
         <span className={'clubber__hand clubber__hand--' + reaction.kind}>
-          {reaction.skin
-            ? <img src={reaction.skin} alt="" />
-            : <span>{reaction.kind === 'up' ? '👍' : '👎'}</span>}
+          {reaction.skin ? (
+            <img src={reaction.skin} alt="" />
+          ) : (
+            <Icon
+              src={reaction.kind === 'up' ? ICONS.like : ICONS.dislike}
+              fallback={reaction.kind === 'up' ? '👍' : '👎'}
+            />
+          )}
         </span>
       )}
 

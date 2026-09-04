@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon, ICONS } from '../ui/Icon';
 
 export interface TrackState {
   artist: string;
@@ -57,7 +58,8 @@ export const TrackPlayer: React.FC<Props> = ({
             disabled={empty || !!track?.myVote}
             onClick={() => onVote('down')}
           >
-            👎<i>{track?.dislikes ?? 0}</i>
+            <Icon className="player__ico" src={ICONS.dislike} fallback="👎" />
+            <i>{track?.dislikes ?? 0}</i>
           </button>
           <button
             className="player__btn"
@@ -65,7 +67,8 @@ export const TrackPlayer: React.FC<Props> = ({
             disabled={empty || !!track?.myVote}
             onClick={() => onVote('up')}
           >
-            👍<i>{track?.likes ?? 0}</i>
+            <Icon className="player__ico" src={ICONS.like} fallback="👍" />
+            <i>{track?.likes ?? 0}</i>
           </button>
           <button className="player__btn" title="Угостить DJ" disabled={empty} onClick={onGift}>
             🍹<i>{track?.gifts ?? 0}</i>

@@ -8,6 +8,7 @@ import { ClubFxLayer } from './ClubFxLayer';
 import { EffectsMenu } from './EffectsMenu';
 import { LayoutTuner, tuned } from './LayoutTuner';
 import { VideoScreen } from './VideoScreen';
+import { Icon, ICONS } from '../ui/Icon';
 import { canEditWelcome, frameOf, type ClubRole } from '../../config/frames';
 
 export type { Clubber };
@@ -169,9 +170,14 @@ export const ClubScene: React.FC<Props> = (p) => {
             <span className="dj-headphones">🎧</span>
             {p.reactions?.[p.dj.id] && (
               <span className={'clubber__hand clubber__hand--' + p.reactions[p.dj.id].kind}>
-                {p.reactions[p.dj.id].skin
-                  ? <img src={p.reactions[p.dj.id].skin!} alt="" />
-                  : <span>{p.reactions[p.dj.id].kind === 'up' ? '👍' : '👎'}</span>}
+                {p.reactions[p.dj.id].skin ? (
+                  <img src={p.reactions[p.dj.id].skin!} alt="" />
+                ) : (
+                  <Icon
+                    src={p.reactions[p.dj.id].kind === 'up' ? ICONS.like : ICONS.dislike}
+                    fallback={p.reactions[p.dj.id].kind === 'up' ? '👍' : '👎'}
+                  />
+                )}
               </span>
             )}
             {p.dj.photo ? (
