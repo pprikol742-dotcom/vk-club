@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { ART, ArtName } from '../config/art';
+﻿import { useState } from 'react';
+import { ART } from '../config/art';
+import type { ArtName } from '../config/art';
 
 type Props = {
   name: ArtName;
@@ -7,13 +8,13 @@ type Props = {
   onClick?: () => void;
   title?: string;
   className?: string;
-  dim?: boolean;      // приглушить (например заблокированная кнопка)
-  glow?: boolean;     // добавить неоновое свечение под картинку
+  dim?: boolean;      // РїСЂРёРіР»СѓС€РёС‚СЊ (РЅР°РїСЂРёРјРµСЂ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅР°СЏ РєРЅРѕРїРєР°)
+  glow?: boolean;     // РґРѕР±Р°РІРёС‚СЊ РЅРµРѕРЅРѕРІРѕРµ СЃРІРµС‡РµРЅРёРµ РїРѕРґ РєР°СЂС‚РёРЅРєСѓ
 };
 
 /**
- * Универсальная иконка. Пока картинки нет — показывает эмодзи,
- * поэтому игра не ломается ни на одном этапе.
+ * РЈРЅРёРІРµСЂСЃР°Р»СЊРЅР°СЏ РёРєРѕРЅРєР°. РџРѕРєР° РєР°СЂС‚РёРЅРєРё РЅРµС‚ вЂ” РїРѕРєР°Р·С‹РІР°РµС‚ СЌРјРѕРґР·Рё,
+ * РїРѕСЌС‚РѕРјСѓ РёРіСЂР° РЅРµ Р»РѕРјР°РµС‚СЃСЏ РЅРё РЅР° РѕРґРЅРѕРј СЌС‚Р°РїРµ.
  */
 export default function ArtIcon({
   name, size = 44, onClick, title, className = '', dim, glow,
@@ -65,3 +66,4 @@ export default function ArtIcon({
     />
   );
 }
+
