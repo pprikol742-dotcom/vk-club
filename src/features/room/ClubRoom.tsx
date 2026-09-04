@@ -65,6 +65,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [welcome, setWelcome] = useState<string>((club as any)?.welcome_text ?? "");
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
+  const [tick, setTick] = useState(0);
 
   /** роль в клубе: хозяин сообщества — жёлтая рамка */
   const myRole: ClubRole = useMemo(() => {
@@ -87,7 +88,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   );
 
   const { toggleMyLightShow, occupants } = useClubRealtime(club?.id ?? null, me);
-  const { position: musicPosition, unlock: unlockAudio } = useClubMusic(APP_ID, session as any);
+
+  const {
+    position: musicPosition,
+    unlock: unlockAudio,
+    atBooth,
+    armed: deckArmed,
+    loadTrack,
+    stop: stopMusic,
+  } = useClubMusic(APP_ID, session as any, profile?.vk_id ?? null);
 
   /* ---------- бан и приветствие ---------- */
   useEffect(() => {
@@ -112,6 +121,12 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   useEffect(() => {
     setWelcome((club as any)?.welcome_text ?? "");
   }, [club]);
+
+  /** секундный тик — чтобы полоса шла и у тех, кто не за пультом */
+  useEffect(() => {
+    const t = setInterval(() => setTick((v) => v + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   /* ---------- маппинг данных в сцену ---------- */
   const djVkId = session?.dj_vk_id ?? null;
@@ -143,18 +158,31 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [occupants, djVkId],
   );
 
+  /**
+   * Полоса трека. За пультом берём настоящее время звука,
+   * остальным считаем от старта на сервере — видят, но не слышат.
+   */
+  const shownPosition = useMemo(() => {
+    if (musicPosition > 0) return musicPosition;
+    const started = (session as any)?.track_started_at;
+    if (!started) return 0;
+    const ms = Date.parse(started);
+    if (!Number.isFinite(ms)) return 0;
+    return Math.max(0, (Date.now() - ms) / 1000);
+  }, [musicPosition, session, tick]);
+
   const track = useMemo(() => {
     if (!session?.dj_vk_id) return null;
     return {
       artist: session.track_artist ?? "",
       title: session.track_title ?? "",
-      position: musicPosition,
+      position: shownPosition,
       duration: (session as any).track_duration ?? (session as any).duration ?? 0,
       likes: session.likes ?? 0,
       dislikes: session.dislikes ?? 0,
       gifts: (session as any).gifts ?? 0,
     };
-  }, [session, musicPosition]);
+  }, [session, shownPosition]);
 
   const messages: UiMessage[] = useMemo(() => {
     const nameOf = (vkId: number) =>
@@ -206,6 +234,18 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     },
     [club],
   );
+
+  /** «Зарядить» — единственная кнопка, с которой начинается звук. */
+  const chargeDeck = useCallback(() => {
+    const url = (session as any)?.track_url;
+    if (!url) {
+      alert("Сначала выбери трек");
+      return;
+    }
+    void loadTrack(url, (session as any)?.track_started_at).then((ok) => {
+      if (!ok) alert("Браузер не пустил звук — нажми «Зарядить» ещё раз");
+    });
+  }, [session, loadTrack]);
 
   const sendChat = useCallback(
     async (text: string) => {
@@ -313,6 +353,12 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [club],
   );
 
+  /** Выход из клуба: сначала глушим звук, потом уходим. */
+  const exitClub = useCallback(() => {
+    stopMusic();
+    leaveClub();
+  }, [stopMusic, leaveClub]);
+
   const toggleLight = () => {
     const next = !myLightOn;
     setMyLightOn(next);
@@ -322,6 +368,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   if (!club || !profile) return null;
 
   const isDj = djVkId === profile.vk_id;
+  const hasTrack = Boolean((session as any)?.track_url);
 
   return (
     <div onPointerDown={unlockAudio}>
@@ -352,7 +399,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         djGifts={DJ_GIFTS}
         playerGifts={PLAYER_GIFTS}
         giftBusy={giftBusy}
-        onExit={leaveClub}
+        onExit={exitClub}
         onBecomeDj={() => djAction("join")}
         onVote={() => {}}
         onSendGift={sendGift}
@@ -368,9 +415,20 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         onBan={banUser}
         onSaveWelcome={saveWelcome}
         onSubscribeEmoji={() => {}}
-        onChooseAnotherClub={leaveClub}
+        onChooseAnotherClub={exitClub}
         extraButtons={
           <>
+            {/* Зарядить: только диджею, только когда трек выбран */}
+            {atBooth && hasTrack && !deckArmed && (
+              <button className="btn-round btn-round--charge" title="Зарядить" onClick={chargeDeck}>
+                ▶
+              </button>
+            )}
+            {atBooth && deckArmed && (
+              <button className="btn-round" title="Снять с пульта" onClick={stopMusic}>
+                ⏹
+              </button>
+            )}
             <button
               className={"btn-round" + (myLightOn ? "" : " btn-round--off")}
               title="Светомузыка"

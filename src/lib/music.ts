@@ -91,24 +91,42 @@ export function directMusicSource(catalog: ClubTrack[]): MusicSource {
   };
 }
 
-/* ---------------- синхронное воспроизведение ---------------- */
+/* ---------------- воспроизведение ---------------- */
+
+/** Пустой звук для разблокировки: браузер запоминает разрешение на элементе. */
+const SILENCE =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
 
 /**
- * Один трек на всех: позиция считается от времени старта на сервере,
- * поэтому вошедший в середине песни услышит её с середины.
+ * Плеер клуба.
+ *
+ * Сам по себе он никогда не начинает играть. Звук стартует только
+ * из явного вызова start(), а тот делается из нажатия «Зарядить».
+ * Всё остальное — стоп: ушёл с пульта, перекупили, вышел из зала.
  */
 export class ClubPlayer {
   private el: HTMLAudioElement;
   private currentUrl: string | null = null;
+  private unlocked = false;
+  /** заряжен ли пульт: только в этом состоянии звук вообще возможен */
+  private isArmed = false;
 
   constructor() {
     this.el = new Audio();
-    this.el.preload = 'auto';
+    this.el.preload = 'none';
     this.el.crossOrigin = 'anonymous';
   }
 
   get audio() {
     return this.el;
+  }
+
+  get armed() {
+    return this.isArmed;
+  }
+
+  get playing() {
+    return this.isArmed && !this.el.paused;
   }
 
   setMuted(muted: boolean) {
@@ -119,39 +137,77 @@ export class ClubPlayer {
     this.el.volume = Math.max(0, Math.min(1, v));
   }
 
-  /** startedAt — момент старта трека на сервере (ISO или ms). */
-  async play(url: string, startedAt: string | number) {
-    const started = typeof startedAt === 'number' ? startedAt : Date.parse(startedAt);
-    const offset = Math.max(0, (Date.now() - started) / 1000);
+  /**
+   * Разблокировка звука. Зовётся из касания экрана.
+   * Ничего не проигрывает — только получает у браузера разрешение,
+   * чтобы потом «Зарядить» сработало с первого раза.
+   */
+  unlock() {
+    if (this.unlocked || this.currentUrl) return;
+    const el = this.el;
+    el.src = SILENCE;
+    el.play()
+      .then(() => {
+        el.pause();
+        el.removeAttribute('src');
+        this.unlocked = true;
+      })
+      .catch(() => {
+        el.removeAttribute('src');
+      });
+  }
+
+  /**
+   * Запустить трек. Единственная точка старта звука.
+   * startedAt — момент старта на сервере, чтобы полоса шла верно.
+   */
+  async start(url: string, startedAt?: string | number | null) {
+    if (!url) return false;
 
     if (this.currentUrl !== url) {
       this.currentUrl = url;
       this.el.src = url;
     }
+    this.isArmed = true;
 
-    // если ушли больше чем на полторы секунды — подтягиваем позицию
-    if (Math.abs(this.el.currentTime - offset) > 1.5) {
-      try {
-        this.el.currentTime = offset;
-      } catch {
-        /* браузер ещё не готов перематывать */
+    if (startedAt != null) {
+      const started = typeof startedAt === 'number' ? startedAt : Date.parse(startedAt);
+      const offset = Math.max(0, (Date.now() - started) / 1000);
+      if (Number.isFinite(offset) && Math.abs(this.el.currentTime - offset) > 1.5) {
+        try {
+          this.el.currentTime = offset;
+        } catch {
+          /* браузер ещё не готов перематывать */
+        }
       }
     }
 
     try {
       await this.el.play();
+      this.unlocked = true;
+      return true;
     } catch {
-      // автозапуск заблокирован до первого касания экрана — не страшно
+      // разрешения нет — жест не дошёл, пусть жмёт «Зарядить» ещё раз
+      this.isArmed = false;
+      return false;
     }
   }
 
+  /** Полный стоп: звук глохнет, ссылка снимается, само не оживёт. */
   stop() {
-    this.el.pause();
+    this.isArmed = false;
     this.currentUrl = null;
+    try {
+      this.el.pause();
+      this.el.removeAttribute('src');
+      this.el.load();
+    } catch {
+      /* элемент уже мёртв */
+    }
   }
 
   /** Сколько секунд трек уже играет. */
   get position() {
-    return this.el.currentTime;
+    return this.isArmed ? this.el.currentTime : 0;
   }
 }

@@ -1,26 +1,35 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ClubPlayer, vkMusicSource, directMusicSource, type MusicSource, type ClubTrack } from '../../lib/music';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ClubPlayer,
+  vkMusicSource,
+  directMusicSource,
+  type MusicSource,
+  type ClubTrack,
+} from '../../lib/music';
 import { useUi } from '../../store/uiStore';
 
 /** Резервный каталог: заливается в Supabase Storage, если аудио ВК не дадут. */
 const FALLBACK_CATALOG: ClubTrack[] = [];
 
+type Session = {
+  track_url?: string | null;
+  track_started_at?: string | null;
+  track_duration?: number | null;
+  dj_vk_id?: number | null;
+} | null;
+
 /**
- * Играет то, что стоит в сессии клуба, синхронно у всех,
- * и отдаёт живую позицию для полосы в плеере.
+ * Звук слышит только тот, кто стоит за пультом, и только после
+ * нажатия «Зарядить». Слушатели видят трек в плеере, но молчат.
+ *
+ * Сам по себе хук музыку не включает никогда: он умеет только глушить.
+ * Запуск — исключительно через loadTrack() из обработчика нажатия.
  */
-export function useClubMusic(
-  appId: number,
-  session: {
-    track_url?: string | null;
-    track_started_at?: string | null;
-    track_duration?: number | null;
-    dj_vk_id?: number | null;
-  } | null,
-) {
+export function useClubMusic(appId: number, session: Session, myVkId?: number | null) {
   const muted = useUi((s) => s.muted);
   const playerRef = useRef<ClubPlayer | null>(null);
   const [position, setPosition] = useState(0);
+  const [armed, setArmed] = useState(false);
 
   if (!playerRef.current) playerRef.current = new ClubPlayer();
 
@@ -30,34 +39,92 @@ export function useClubMusic(
     [appId],
   );
 
+  const djVkId = session?.dj_vk_id ?? null;
+  const trackUrl = session?.track_url ?? null;
+  const startedAt = session?.track_started_at ?? null;
+
+  /** Я за пультом? Только при этом звук вообще возможен. */
+  const atBooth = myVkId != null && djVkId != null && djVkId === myVkId;
+
   useEffect(() => {
     playerRef.current?.setMuted(muted);
   }, [muted]);
 
+  /* ---- глушение: ушёл с пульта, перекупили, трек сняли ---- */
   useEffect(() => {
     const player = playerRef.current!;
-    const url = session?.track_url;
-    const startedAt = session?.track_started_at;
-
-    if (!url || !startedAt || !session?.dj_vk_id) {
+    if (!atBooth || !trackUrl) {
       player.stop();
+      setArmed(false);
+      setPosition(0);
+    }
+  }, [atBooth, trackUrl]);
+
+  /* ---- смена трека, пока пульт заряжен ---- */
+  useEffect(() => {
+    const player = playerRef.current!;
+    if (!atBooth || !trackUrl || !player.armed) return;
+    // диджей нажал «дальше» — жест уже был, продолжаем без вопросов
+    void player.start(trackUrl, startedAt);
+  }, [trackUrl]);
+
+  /* ---- живая позиция для полосы ---- */
+  useEffect(() => {
+    const player = playerRef.current!;
+    if (!armed) {
       setPosition(0);
       return;
     }
-
-    player.play(url, startedAt);
-
     const timer = setInterval(() => setPosition(player.position), 500);
     return () => clearInterval(timer);
-  }, [session?.track_url, session?.track_started_at, session?.dj_vk_id]);
+  }, [armed]);
 
+  /* ---- размонтирование ---- */
   useEffect(() => () => playerRef.current?.stop(), []);
 
-  /** Браузеры не дают играть до первого касания — зовём после клика по залу. */
-  const unlock = () => {
-    const el = playerRef.current?.audio;
-    if (el && el.paused && el.src) el.play().catch(() => {});
-  };
+  /**
+   * Кнопка «Зарядить». Вешать прямо на onClick, без await до вызова,
+   * иначе браузер посчитает, что жеста уже не было, и звук не пустит.
+   */
+  const loadTrack = useCallback(
+    async (url?: string | null, at?: string | number | null) => {
+      const player = playerRef.current!;
+      if (!atBooth) return false;
 
-  return { position, source, unlock, player: playerRef.current! };
+      const src = url ?? trackUrl;
+      if (!src) return false;
+
+      const ok = await player.start(src, at ?? startedAt);
+      setArmed(ok);
+      return ok;
+    },
+    [atBooth, trackUrl, startedAt],
+  );
+
+  /** Снять трек с пульта вручную. */
+  const stop = useCallback(() => {
+    playerRef.current?.stop();
+    setArmed(false);
+    setPosition(0);
+  }, []);
+
+  /**
+   * Разблокировка звука по касанию экрана.
+   * Ничего не проигрывает — только берёт у браузера разрешение заранее,
+   * чтобы «Зарядить» сработало с первого нажатия.
+   */
+  const unlock = useCallback(() => {
+    playerRef.current?.unlock();
+  }, []);
+
+  return {
+    position,
+    source,
+    unlock,
+    player: playerRef.current!,
+    atBooth,
+    armed,
+    loadTrack,
+    stop,
+  };
 }
