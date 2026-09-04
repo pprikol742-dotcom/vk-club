@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { useClubRealtime, type PresenceMe } from "./useClubRealtime";
 import { getLaunchParams } from "../../lib/vkBridge";
@@ -16,17 +16,10 @@ import type { ChatMessage as UiMessage } from "../../components/club/ChatPanel";
 import type { GiftItem } from "../../components/modals/ClubModals";
 import type { ClubberProfile } from "../../components/modals/ProfileModal";
 import { genderFromVk, type ClubRole } from "../../config/frames";
-import { addToMyTracks } from "../../lib/library";
-import { CoinShopModal } from "../shop/CoinShopModal";
 import { useClubMusic } from "./useClubMusic";
-import { MusicPickerModal } from "./MusicPickerModal";
-import type { ClubTrack } from "../../lib/music";
 
-/** ID приложения берём из окружения — иначе ВК ответит «Wrong app id». */
-const APP_ID = Number(import.meta.env.VITE_VK_APP_ID ?? 0);
-/** Дольше шести минут за пультом не задерживаемся. */
-const MAX_SET_SEC = 360;
-const APP_URL = `https://vk.com/app${APP_ID}`;
+const APP_URL = "https://vk.com/app54737632";
+const APP_ID = 54737632;
 
 /** Подарки клабберу и диджею — иконки берём из твоего giftIcons. */
 const withIcons = (list: Array<{ id: string; name: string; price: number }>): GiftItem[] =>
@@ -53,34 +46,11 @@ const DJ_GIFTS = withIcons([
   { id: "chifir", name: "Чифир", price: 6 },
 ]);
 
-type SideModal = "hands" | "decorate" | "leaderboard" | "music" | "coins" | null;
-
-/** Достаём настоящий текст ошибки из ответа Edge Function. */
-async function describeError(e: unknown): Promise<string> {
-  const err = e as any;
-  const ctx = err?.context;
-  if (ctx && typeof ctx.text === "function") {
-    try {
-      const body = await ctx.text();
-      if (body) {
-        try {
-          const parsed = JSON.parse(body);
-          return parsed.error ?? parsed.message ?? body;
-        } catch {
-          return body;
-        }
-      }
-    } catch {
-      /* тело уже прочитано */
-    }
-  }
-  return err?.message ?? "Неизвестная ошибка";
-}
+type SideModal = "hands" | "decorate" | "leaderboard" | null;
 
 export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const leaveClub = onLeaveClub ?? (() => useAppStore.setState({ club: null } as any));
   const profile = useAppStore((s) => s.profile);
-  const setSession = useAppStore((s) => s.setSession);
   const club = useAppStore((s) => s.club);
   const session = useAppStore((s) => s.session);
   const chatMessages = useAppStore((s) => s.chatMessages);
@@ -95,7 +65,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [welcome, setWelcome] = useState<string>((club as any)?.welcome_text ?? "");
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
-  const djActionRef = useRef<((a: "join" | "advance") => void) | null>(null);
 
   /** роль в клубе: хозяин сообщества — жёлтая рамка */
   const myRole: ClubRole = useMemo(() => {
@@ -117,10 +86,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [profile, myRole],
   );
 
-  const { toggleMyLightShow, occupants, reactions, sendReaction } = useClubRealtime(
-    club?.id ?? null,
-    me,
-  );
+  const { toggleMyLightShow, occupants } = useClubRealtime(club?.id ?? null, me);
   const { position: musicPosition, unlock: unlockAudio } = useClubMusic(APP_ID, session as any);
 
   /* ---------- бан и приветствие ---------- */
@@ -163,29 +129,19 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     };
   }, [djVkId, occupants]);
 
-  const crowd: Clubber[] = useMemo(() => {
-    const list = occupants
-      .filter((o) => o.vkId !== djVkId)
-      .map((o) => ({
-        id: String(o.vkId),
-        name: o.name,
-        photo: o.photo,
-        gender: o.gender,
-        role: o.role,
-      }));
-
-    // себя показываем всегда: presence может ещё не догнать
-    if (me && me.vkId !== djVkId && !list.some((c) => c.id === String(me.vkId))) {
-      list.unshift({
-        id: String(me.vkId),
-        name: me.name,
-        photo: me.photo,
-        gender: me.gender,
-        role: me.role,
-      });
-    }
-    return list;
-  }, [occupants, djVkId, me]);
+  const crowd: Clubber[] = useMemo(
+    () =>
+      occupants
+        .filter((o) => o.vkId !== djVkId)
+        .map((o) => ({
+          id: String(o.vkId),
+          name: o.name,
+          photo: o.photo,
+          gender: o.gender,
+          role: o.role,
+        })),
+    [occupants, djVkId],
+  );
 
   const track = useMemo(() => {
     if (!session?.dj_vk_id) return null;
@@ -193,62 +149,12 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       artist: session.track_artist ?? "",
       title: session.track_title ?? "",
       position: musicPosition,
-      duration: (session as any).track_duration_sec ?? 0,
+      duration: (session as any).track_duration ?? (session as any).duration ?? 0,
       likes: session.likes ?? 0,
       dislikes: session.dislikes ?? 0,
       gifts: (session as any).gifts ?? 0,
     };
   }, [session, musicPosition]);
-
-  /** Realtime иногда молчит — подстраховываемся опросом сессии. */
-  useEffect(() => {
-    if (!club) return;
-    let stop = false;
-
-    const pull = async () => {
-      const { data } = await supabase
-        .from("club_sessions")
-        .select("*")
-        .eq("club_id", club.id)
-        .maybeSingle();
-      if (!stop && data) setSession(data as any);
-    };
-
-    pull();
-    const timer = setInterval(pull, 4000);
-    return () => {
-      stop = true;
-      clearInterval(timer);
-    };
-  }, [club, setSession]);
-
-  /** Сет закончился или упёрся в лимит — уступаем пульт следующему. */
-  useEffect(() => {
-    if (!club || !profile) return;
-    if ((session as any)?.dj_vk_id !== profile.vk_id) return;
-
-    const startedAt = Date.parse((session as any)?.track_started_at ?? '');
-    if (!startedAt) return;
-
-    const trackSec = (session as any)?.track_duration_sec ?? MAX_SET_SEC;
-    const limit = Math.min(trackSec || MAX_SET_SEC, MAX_SET_SEC);
-    const left = limit * 1000 - (Date.now() - startedAt);
-
-    const timer = setTimeout(() => {
-      djActionRef.current?.('advance');
-    }, Math.max(1000, left));
-
-    return () => clearTimeout(timer);
-  }, [club, profile, session]);
-
-  /** Реакции по строковым id — в таком виде их ждёт сцена. */
-  const reactionMap = useMemo(() => {
-    const out: Record<string, { kind: "up" | "down"; skin: string | null }> = {};
-    for (const r of Object.values(reactions)) {
-      out[String(r.vkId)] = { kind: r.kind, skin: r.skin };
-    }
-    return out;
-  }, [reactions]);
 
   const messages: UiMessage[] = useMemo(() => {
     const nameOf = (vkId: number) =>
@@ -264,38 +170,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   }, [chatMessages, occupants, profile]);
 
   /* ---------- действия ---------- */
-  /** Лайк и дизлайк: голос в базу и поднятая рука над аватаркой. */
-  const vote = useCallback(
-    async (kind: "up" | "down") => {
-      if (!club || !profile) return;
-      sendReaction(kind, handSkinIconUrl(profile.hand_skin) ?? null);
-      const { error } = await supabase.rpc("vote_track", {
-        p_club: club.id,
-        p_vk_id: profile.vk_id,
-        p_vote: kind,
-      });
-      if (error) alert(error.message);
-    },
-    [club, profile, sendReaction],
-  );
-
-  /** Плюсик в плеере — трек уезжает в личный плейлист. */
-  const addCurrentTrack = useCallback(async () => {
-    const url = (session as any)?.track_url;
-    if (!profile || !url) return;
-    try {
-      const { data, error } = await supabase
-        .from("tracks")
-        .select("id")
-        .eq("url", url)
-        .maybeSingle();
-      if (error) throw error;
-      if (data?.id) await addToMyTracks(profile.vk_id, data.id);
-    } catch (e) {
-      console.warn("add track failed", e);
-    }
-  }, [profile, session]);
-
   const sendGift = useCallback(
     async (gift: GiftItem, userId: string | null) => {
       if (!club) return;
@@ -318,44 +192,19 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   );
 
   const djAction = useCallback(
-    async (action: "join" | "advance", track?: ClubTrack) => {
+    async (action: "join" | "advance") => {
       if (!club) return;
       try {
         await callEdgeFunction("dj-action", {
           launchParams: getLaunchParams(),
           club_id: club.id,
           action,
-          track: track
-            ? {
-                title: track.title,
-                artist: track.artist,
-                source: (track as any).video_url
-                  ? "clip"
-                  : String(track.id).startsWith("clip_")
-                    ? "clip"
-                    : "library",
-                url: track.url ?? null,
-                video_url: (track as any).video_url ?? null,
-                duration_sec: track.duration,
-              }
-            : undefined,
         });
       } catch (e) {
-        alert(await describeError(e));
+        alert((e as Error).message);
       }
     },
     [club],
-  );
-
-  djActionRef.current = djAction;
-
-  /** «Стать DJ» — сперва выбираем, что заряжать. */
-  const pickTrack = useCallback(
-    async (track: ClubTrack) => {
-      setSideModal(null);
-      await djAction("join", track);
-    },
-    [djAction],
   );
 
   const sendChat = useCallback(
@@ -472,6 +321,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
 
   if (!club || !profile) return null;
 
+  const isDj = djVkId === profile.vk_id;
+
   return (
     <div onPointerDown={unlockAudio}>
       <ClubPage
@@ -485,7 +336,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         banned={banned}
         myId={String(profile.vk_id)}
         myRole={myRole}
-        coins={(profile as any).unlimited_coins ? Infinity : profile.coins}
+        coins={profile.coins}
         votes={(profile as any).votes ?? 0}
         track={track}
         dj={dj}
@@ -494,8 +345,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         queueMinutes={15}
         messages={messages}
         appUrl={APP_URL}
-        videoUrl={(session as any)?.track_video_url ?? null}
-        videoOffset={musicPosition}
         emojiSubscribed={Boolean((profile as any).emoji_until)}
         emojiPrice={5}
         openedProfile={openedProfile}
@@ -503,23 +352,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         djGifts={DJ_GIFTS}
         playerGifts={PLAYER_GIFTS}
         giftBusy={giftBusy}
-        onExit={() => {
-          if (djVkId === profile.vk_id) {
-            alert("Ты за пультом — сначала доиграй трек или уступи очередь");
-            return;
-          }
-          leaveClub();
-        }}
-        onBecomeDj={() => setSideModal("music")}
-        onVote={vote}
-        onAddTrack={addCurrentTrack}
-        reactions={reactionMap}
+        onExit={leaveClub}
+        onBecomeDj={() => djAction("join")}
+        onVote={() => {}}
         onSendGift={sendGift}
         onSkipQueue={() => {}}
         onSendMessage={sendChat}
         onClap={() => {}}
         onDecorate={() => setSideModal("decorate")}
-        onOpenShop={() => setSideModal("coins")}
+        onOpenShop={() => setSideModal("hands")}
         onOpenTop={() => setSideModal("leaderboard")}
         onOpenProfile={loadProfile}
         onCloseProfile={() => setOpenedProfile(null)}
@@ -544,6 +385,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 "👍"
               )}
             </button>
+            {isDj && (
+              <button
+                className="btn-round"
+                title="Завершить сет"
+                onClick={() => djAction("advance")}
+              >
+                ⏭
+              </button>
+            )}
           </>
         }
         overlay={
@@ -558,31 +408,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       {sideModal === "decorate" && <DecorateClubModal onClose={() => setSideModal(null)} />}
       {sideModal === "leaderboard" && (
         <LeaderboardModal clubId={club.id} onClose={() => setSideModal(null)} />
-      )}
-      {sideModal === "coins" && (
-        <CoinShopModal
-          vkId={profile.vk_id}
-          coins={profile.coins}
-          unlimited={Boolean((profile as any).unlimited_coins)}
-          onClose={() => setSideModal(null)}
-          onBought={(total) => useAppStore.setState({ profile: { ...profile, coins: total } } as any)}
-        />
-      )}
-      {sideModal === "music" && (
-        <MusicPickerModal
-          vkId={profile.vk_id}
-          onClose={() => setSideModal(null)}
-          onPick={pickTrack}
-          onPickClip={(v) =>
-            pickTrack({
-              id: `clip_${Date.now()}`,
-              artist: v.artist,
-              title: v.title,
-              duration: v.duration,
-              video_url: v.url,
-            } as any)
-          }
-        />
       )}
     </div>
   );

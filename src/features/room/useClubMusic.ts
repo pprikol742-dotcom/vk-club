@@ -14,8 +14,7 @@ export function useClubMusic(
   session: {
     track_url?: string | null;
     track_started_at?: string | null;
-    track_duration_sec?: number | null;
-    track_video_url?: string | null;
+    track_duration?: number | null;
     dj_vk_id?: number | null;
   } | null,
 ) {
@@ -40,23 +39,6 @@ export function useClubMusic(
     const url = session?.track_url;
     const startedAt = session?.track_started_at;
 
-    // без диджея за пультом в клубе тишина
-    if (!session?.dj_vk_id) {
-      player.stop();
-      setPosition(0);
-      return;
-    }
-
-    // звук клипа идёт из встроенного плеера — свой не включаем
-    if (session?.track_video_url) {
-      player.stop();
-      const timer = setInterval(() => {
-        const started = Date.parse(session.track_started_at ?? '');
-        setPosition(started ? Math.max(0, (Date.now() - started) / 1000) : 0);
-      }, 500);
-      return () => clearInterval(timer);
-    }
-
     if (!url || !startedAt || !session?.dj_vk_id) {
       player.stop();
       setPosition(0);
@@ -67,7 +49,7 @@ export function useClubMusic(
 
     const timer = setInterval(() => setPosition(player.position), 500);
     return () => clearInterval(timer);
-  }, [session?.track_url, session?.track_started_at, session?.dj_vk_id, session?.track_video_url]);
+  }, [session?.track_url, session?.track_started_at, session?.dj_vk_id]);
 
   useEffect(() => () => playerRef.current?.stop(), []);
 

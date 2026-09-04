@@ -24,38 +24,22 @@ export interface MusicSource {
 
 let audioToken: string | null = null;
 
-/**
- * Токен с правом на аудио.
- * Настоящую причину отказа не прячем — по ней понятно, что чинить.
- */
-export async function getAudioToken(appId: number): Promise<string> {
-  if (!appId) {
-    throw new Error('Не задан VITE_VK_APP_ID — ВК не поймёт, какое приложение спрашивает доступ');
-  }
+/** Токен с правом на аудио. Если приложению не разрешено — вернёт null. */
+export async function getAudioToken(appId: number): Promise<string | null> {
   if (audioToken) return audioToken;
   try {
     const res = await bridge.send('VKWebAppGetAuthToken', { app_id: appId, scope: 'audio' });
-    if (!res?.access_token) throw new Error('ВКонтакте вернул пустой токен');
-    // если права на аудио не дали, ВК присылает токен без него
-    if (res.scope !== undefined && !String(res.scope).includes('audio')) {
-      throw new Error('Приложению не выдано право на аудиозаписи (scope: ' + res.scope + ')');
-    }
-    audioToken = res.access_token;
+    audioToken = res.access_token ?? null;
     return audioToken;
-  } catch (e) {
-    const err = e as any;
-    const reason =
-      err?.error_data?.error_reason ??
-      err?.error_data?.error_msg ??
-      err?.error_data?.error_description ??
-      err?.message;
-    throw new Error(reason ? `ВК: ${reason}` : 'ВК не дал доступ к аудиозаписям');
+  } catch {
+    return null;
   }
 }
 
 export function vkMusicSource(appId: number): MusicSource {
   const call = async (method: string, params: Record<string, unknown>) => {
     const token = await getAudioToken(appId);
+    if (!token) throw new Error('Нет доступа к аудио ВК');
     const res: any = await bridge.send('VKWebAppCallAPIMethod', {
       method,
       params: { ...params, v: '5.199', access_token: token },
@@ -83,26 +67,6 @@ export function vkMusicSource(appId: number): MusicSource {
       return r?.[0]?.url ?? null;
     },
   };
-}
-
-/** Моя музыка ВКонтакте — то, что добавлено в аудиозаписи. */
-export async function fetchMyAudio(appId: number, count = 100): Promise<ClubTrack[]> {
-  const token = await getAudioToken(appId);
-
-  const res: any = await bridge.send('VKWebAppCallAPIMethod', {
-    method: 'audio.get',
-    params: { count, v: '5.199', access_token: token },
-  });
-  if (res?.error_type) {
-    throw new Error(res?.error_data?.error_msg ?? 'Не удалось загрузить аудиозаписи');
-  }
-  return (res?.response?.items ?? []).map((a: any) => ({
-    id: `${a.owner_id}_${a.id}`,
-    artist: a.artist,
-    title: a.title,
-    duration: a.duration,
-    url: a.url || undefined,
-  }));
 }
 
 /* ---------------- запасной источник: свои файлы ---------------- */

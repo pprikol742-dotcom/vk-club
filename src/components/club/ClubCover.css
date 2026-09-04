@@ -1,0 +1,52 @@
+/* Обложка карточки клуба: картинка паблика ВК под неоновой рамкой */
+
+.club-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 10px;
+  background: linear-gradient(140deg, #2a1040, #150b22);
+  box-shadow: 0 0 0 1px rgba(217, 70, 239, 0.35),
+              0 0 14px rgba(217, 70, 239, 0.25);
+}
+
+.club-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* затемнение снизу, чтобы счётчик онлайна и ник владельца читались */
+.club-cover__shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 45%,
+    rgba(8, 4, 16, 0.72) 100%
+  );
+}
+
+.club-card:hover .club-cover img,
+.club-card:active .club-cover img {
+  transform: scale(1.04);
+}
+
+/* пока картинка не пришла — мягкое мерцание вместо белой дыры */
+.club-cover img[style*="opacity: 0"] + .club-cover__shade::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #241033 30%, #3a1a52 50%, #241033 70%);
+  background-size: 220% 100%;
+  animation: coverPulse 1.1s linear infinite;
+}
+
+@keyframes coverPulse {
+  from { background-position: 130% 0; }
+  to   { background-position: -30% 0; }
+}
