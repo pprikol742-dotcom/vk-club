@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { useClubRealtime, type PresenceMe } from "./useClubRealtime";
 import { getLaunchParams } from "../../lib/vkBridge";
@@ -7,6 +7,7 @@ import { GiftFxLayer } from "./GiftFxLayer";
 import { HandSkinShop } from "../gifts/HandSkinShop";
 import { DecorateClubModal } from "./DecorateClubModal";
 import { LeaderboardModal } from "./LeaderboardModal";
+import { MusicPickerModal } from "./MusicPickerModal";
 import { handSkinIconUrl } from "../../lib/handSkins";
 import { giftIconUrl } from "../../lib/giftIcons";
 
@@ -15,35 +16,36 @@ import type { Clubber } from "../../components/club/ClubberAvatar";
 import type { ChatMessage as UiMessage } from "../../components/club/ChatPanel";
 import type { GiftItem } from "../../components/modals/ClubModals";
 import type { ClubberProfile } from "../../components/modals/ProfileModal";
+import type { ClubTrack } from "../../lib/music";
 import { genderFromVk, type ClubRole } from "../../config/frames";
 import { useClubMusic } from "./useClubMusic";
 
-const APP_URL = "https://vk.com/app54737632";
-const APP_ID = 54737632;
+const APP_URL = "https://vk.com/app54746228";
+const APP_ID = 54746228;
 
-/** РџРѕРґР°СЂРєРё РєР»Р°Р±Р±РµСЂСѓ Рё РґРёРґР¶РµСЋ вЂ” РёРєРѕРЅРєРё Р±РµСЂС‘Рј РёР· С‚РІРѕРµРіРѕ giftIcons. */
+/** Подарки клабберу и диджею — иконки берём из твоего giftIcons. */
 const withIcons = (list: Array<{ id: string; name: string; price: number }>): GiftItem[] =>
   list.map((g) => ({ ...g, icon: giftIconUrl(g.id) ?? undefined }));
 
 const PLAYER_GIFTS = withIcons([
-  { id: "ice_cream", name: "РњРѕСЂРѕР¶РµРЅРѕРµ", price: 5 },
-  { id: "chocolate", name: "РљРѕРЅС„РµС‚Р°", price: 5 },
-  { id: "raspberry", name: "РњР°Р»РёРЅРєР°", price: 4 },
-  { id: "kiss", name: "РџРѕС†РµР»СѓР№", price: 5 },
-  { id: "heart", name: "РЎРµСЂРґРµС‡РєРѕ", price: 5 },
-  { id: "snowball", name: "РЎРЅРµР¶РѕРє", price: 3 },
-  { id: "rotten_tomato", name: "РџРѕРјРёРґРѕСЂ", price: 3 },
-  { id: "egg", name: "РЇР№С†Рѕ", price: 3 },
+  { id: "ice_cream", name: "Мороженое", price: 5 },
+  { id: "chocolate", name: "Конфета", price: 5 },
+  { id: "raspberry", name: "Малинка", price: 4 },
+  { id: "kiss", name: "Поцелуй", price: 5 },
+  { id: "heart", name: "Сердечко", price: 5 },
+  { id: "snowball", name: "Снежок", price: 3 },
+  { id: "rotten_tomato", name: "Помидор", price: 3 },
+  { id: "egg", name: "Яйцо", price: 3 },
 ]);
 
 const DJ_GIFTS = withIcons([
-  { id: "cigar", name: "РЎРёРіР°СЂР°", price: 7 },
-  { id: "hookah", name: "РљР°Р»СЊСЏРЅ", price: 7 },
-  { id: "wine_glass", name: "Р’РёРЅРѕ", price: 5 },
-  { id: "cognac_glass", name: "РљРѕРЅСЊСЏРє", price: 6 },
-  { id: "beer_bottle", name: "РџРёРІРѕ", price: 5 },
-  { id: "coffee", name: "РљРѕС„Рµ", price: 4 },
-  { id: "chifir", name: "Р§РёС„РёСЂ", price: 6 },
+  { id: "cigar", name: "Сигара", price: 7 },
+  { id: "hookah", name: "Кальян", price: 7 },
+  { id: "wine_glass", name: "Вино", price: 5 },
+  { id: "cognac_glass", name: "Коньяк", price: 6 },
+  { id: "beer_bottle", name: "Пиво", price: 5 },
+  { id: "coffee", name: "Кофе", price: 4 },
+  { id: "chifir", name: "Чифир", price: 6 },
 ]);
 
 type SideModal = "hands" | "decorate" | "leaderboard" | null;
@@ -59,6 +61,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const activeGifts = useAppStore((s) => s.activeGifts);
 
   const [sideModal, setSideModal] = useState<SideModal>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [djBusy, setDjBusy] = useState(false);
   const [myLightOn, setMyLightOn] = useState(true);
   const [giftBusy, setGiftBusy] = useState(false);
   const [banned, setBanned] = useState(false);
@@ -67,7 +71,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
   const [tick, setTick] = useState(0);
 
-  /** СЂРѕР»СЊ РІ РєР»СѓР±Рµ: С…РѕР·СЏРёРЅ СЃРѕРѕР±С‰РµСЃС‚РІР° вЂ” Р¶С‘Р»С‚Р°СЏ СЂР°РјРєР° */
+  /** роль в клубе: хозяин сообщества — жёлтая рамка */
   const myRole: ClubRole = useMemo(() => {
     const ownerVk = (club as any)?.owner_vk_id ?? (club as any)?.creator_vk_id;
     return ownerVk && profile && ownerVk === profile.vk_id ? "owner" : "member";
@@ -98,7 +102,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     stop: stopMusic,
   } = useClubMusic(APP_ID, session as any, profile?.vk_id ?? null);
 
-  /* ---------- Р±Р°РЅ Рё РїСЂРёРІРµС‚СЃС‚РІРёРµ ---------- */
+  /* ---------- бан и приветствие ---------- */
   useEffect(() => {
     if (!club || !profile) return;
     let cancelled = false;
@@ -122,13 +126,13 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     setWelcome((club as any)?.welcome_text ?? "");
   }, [club]);
 
-  /** СЃРµРєСѓРЅРґРЅС‹Р№ С‚РёРє вЂ” С‡С‚РѕР±С‹ РїРѕР»РѕСЃР° С€Р»Р° Рё Сѓ С‚РµС…, РєС‚Рѕ РЅРµ Р·Р° РїСѓР»СЊС‚РѕРј */
+  /** секундный тик — чтобы полоса шла и у тех, кто не за пультом */
   useEffect(() => {
     const t = setInterval(() => setTick((v) => v + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
-  /* ---------- РјР°РїРїРёРЅРі РґР°РЅРЅС‹С… РІ СЃС†РµРЅСѓ ---------- */
+  /* ---------- маппинг данных в сцену ---------- */
   const djVkId = session?.dj_vk_id ?? null;
 
   const dj: Clubber | null = useMemo(() => {
@@ -159,8 +163,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   );
 
   /**
-   * РџРѕР»РѕСЃР° С‚СЂРµРєР°. Р—Р° РїСѓР»СЊС‚РѕРј Р±РµСЂС‘Рј РЅР°СЃС‚РѕСЏС‰РµРµ РІСЂРµРјСЏ Р·РІСѓРєР°,
-   * РѕСЃС‚Р°Р»СЊРЅС‹Рј СЃС‡РёС‚Р°РµРј РѕС‚ СЃС‚Р°СЂС‚Р° РЅР° СЃРµСЂРІРµСЂРµ вЂ” РІРёРґСЏС‚, РЅРѕ РЅРµ СЃР»С‹С€Р°С‚.
+   * Полоса трека. За пультом берём настоящее время звука,
+   * остальным считаем от старта на сервере — видят, но не слышат.
    */
   const shownPosition = useMemo(() => {
     if (musicPosition > 0) return musicPosition;
@@ -197,7 +201,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     }));
   }, [chatMessages, occupants, profile]);
 
-  /* ---------- РґРµР№СЃС‚РІРёСЏ ---------- */
+  /* ---------- действия ---------- */
   const sendGift = useCallback(
     async (gift: GiftItem, userId: string | null) => {
       if (!club) return;
@@ -219,31 +223,75 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [club, addCoins],
   );
 
+  /**
+   * join требует трек — без него функция отвечает «Сначала выбери трек».
+   * Поэтому кнопка «Стать DJ» открывает выбор музыки, а join уходит уже с треком.
+   */
   const djAction = useCallback(
-    async (action: "join" | "advance") => {
-      if (!club) return;
+    async (
+      action: "join" | "leave" | "advance",
+      track?: Record<string, unknown>,
+    ): Promise<boolean> => {
+      if (!club) return false;
       try {
         await callEdgeFunction("dj-action", {
           launchParams: getLaunchParams(),
           club_id: club.id,
           action,
+          ...(track ? { track } : {}),
         });
+        return true;
       } catch (e) {
         alert((e as Error).message);
+        return false;
       }
     },
     [club],
   );
 
-  /** В«Р—Р°СЂСЏРґРёС‚СЊВ» вЂ” РµРґРёРЅСЃС‚РІРµРЅРЅР°СЏ РєРЅРѕРїРєР°, СЃ РєРѕС‚РѕСЂРѕР№ РЅР°С‡РёРЅР°РµС‚СЃСЏ Р·РІСѓРє. */
+  /** Выбрали трек из фонотеки, своих или загрузили файл. */
+  const pickTrack = useCallback(
+    async (t: ClubTrack) => {
+      setDjBusy(true);
+      const ok = await djAction("join", {
+        title: t.title,
+        artist: t.artist,
+        source: "library",
+        url: t.url ?? null,
+        duration_sec: t.duration ?? 180,
+      });
+      setDjBusy(false);
+      if (ok) setPickerOpen(false);
+    },
+    [djAction],
+  );
+
+  /** Выбрали клип по ссылке. */
+  const pickClip = useCallback(
+    async (v: { url: string; artist: string; title: string; duration: number }) => {
+      setDjBusy(true);
+      const ok = await djAction("join", {
+        title: v.title,
+        artist: v.artist,
+        source: "clip",
+        video_url: v.url,
+        duration_sec: v.duration ?? 300,
+      });
+      setDjBusy(false);
+      if (ok) setPickerOpen(false);
+    },
+    [djAction],
+  );
+
+  /** «Зарядить» — единственная кнопка, с которой начинается звук. */
   const chargeDeck = useCallback(() => {
     const url = (session as any)?.track_url;
     if (!url) {
-      alert("РЎРЅР°С‡Р°Р»Р° РІС‹Р±РµСЂРё С‚СЂРµРє");
+      setPickerOpen(true);
       return;
     }
     void loadTrack(url, (session as any)?.track_started_at).then((ok) => {
-      if (!ok) alert("Р‘СЂР°СѓР·РµСЂ РЅРµ РїСѓСЃС‚РёР» Р·РІСѓРє вЂ” РЅР°Р¶РјРё В«Р—Р°СЂСЏРґРёС‚СЊВ» РµС‰С‘ СЂР°Р·");
+      if (!ok) alert("Браузер не пустил звук — нажми «Зарядить» ещё раз");
     });
   }, [session, loadTrack]);
 
@@ -268,7 +316,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       const vkId = Number(userId);
       const o = occupants.find((x) => x.vkId === vkId);
 
-      // Р±Р°Р·РѕРІР°СЏ РєР°СЂС‚РѕС‡РєР° РёР· presence вЂ” РїРѕРєР°Р¶РµС‚СЃСЏ РјРіРЅРѕРІРµРЅРЅРѕ
+      // базовая карточка из presence — покажется мгновенно
       const base: ClubberProfile = {
         id: userId,
         name: o?.name ?? `id${vkId}`,
@@ -306,7 +354,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
           buyoutPrice: (data as any).buyout_price ?? 32,
         });
       } catch {
-        /* РѕСЃС‚Р°С‘РјСЃСЏ РЅР° Р±Р°Р·РѕРІРѕР№ РєР°СЂС‚РѕС‡РєРµ */
+        /* остаёмся на базовой карточке */
       }
     },
     [occupants],
@@ -353,7 +401,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [club],
   );
 
-  /** Р’С‹С…РѕРґ РёР· РєР»СѓР±Р°: СЃРЅР°С‡Р°Р»Р° РіР»СѓС€РёРј Р·РІСѓРє, РїРѕС‚РѕРј СѓС…РѕРґРёРј. */
+  /** Выход из клуба: сначала глушим звук, потом уходим. */
   const exitClub = useCallback(() => {
     stopMusic();
     leaveClub();
@@ -400,7 +448,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         playerGifts={PLAYER_GIFTS}
         giftBusy={giftBusy}
         onExit={exitClub}
-        onBecomeDj={() => djAction("join")}
+        onBecomeDj={() => setPickerOpen(true)}
         onVote={() => {}}
         onSendGift={sendGift}
         onSkipQueue={() => {}}
@@ -418,38 +466,43 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         onChooseAnotherClub={exitClub}
         extraButtons={
           <>
-            {/* Р—Р°СЂСЏРґРёС‚СЊ: С‚РѕР»СЊРєРѕ РґРёРґР¶РµСЋ, С‚РѕР»СЊРєРѕ РєРѕРіРґР° С‚СЂРµРє РІС‹Р±СЂР°РЅ */}
+            {/* Зарядить: только диджею, только когда трек выбран */}
             {atBooth && hasTrack && !deckArmed && (
-              <button className="btn-round btn-round--charge" title="Р—Р°СЂСЏРґРёС‚СЊ" onClick={chargeDeck}>
-                в–¶
+              <button className="btn-round btn-round--charge" title="Зарядить" onClick={chargeDeck}>
+                ▶
               </button>
             )}
             {atBooth && deckArmed && (
-              <button className="btn-round" title="РЎРЅСЏС‚СЊ СЃ РїСѓР»СЊС‚Р°" onClick={stopMusic}>
-                вЏ№
+              <button className="btn-round" title="Снять с пульта" onClick={stopMusic}>
+                ⏹
+              </button>
+            )}
+            {atBooth && (
+              <button className="btn-round" title="Сменить трек" onClick={() => setPickerOpen(true)}>
+                ♪
               </button>
             )}
             <button
               className={"btn-round" + (myLightOn ? "" : " btn-round--off")}
-              title="РЎРІРµС‚РѕРјСѓР·С‹РєР°"
+              title="Светомузыка"
               onClick={toggleLight}
             >
-              рџ’Ў
+              💡
             </button>
-            <button className="btn-round" title="РњР°РіР°Р·РёРЅ СЂСѓРє" onClick={() => setSideModal("hands")}>
+            <button className="btn-round" title="Магазин рук" onClick={() => setSideModal("hands")}>
               {handSkinIconUrl(profile.hand_skin) ? (
                 <img src={handSkinIconUrl(profile.hand_skin)!} alt="" width={18} height={18} />
               ) : (
-                "рџ‘Ќ"
+                "👍"
               )}
             </button>
             {isDj && (
               <button
                 className="btn-round"
-                title="Р—Р°РІРµСЂС€РёС‚СЊ СЃРµС‚"
+                title="Завершить сет"
                 onClick={() => djAction("advance")}
               >
-                вЏ­
+                ⏭
               </button>
             )}
           </>
@@ -462,6 +515,16 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         }
       />
 
+      {pickerOpen && (
+        <MusicPickerModal
+          vkId={profile.vk_id}
+          busy={djBusy}
+          onClose={() => setPickerOpen(false)}
+          onPick={pickTrack}
+          onPickClip={pickClip}
+        />
+      )}
+
       {sideModal === "hands" && <HandSkinShop onClose={() => setSideModal(null)} />}
       {sideModal === "decorate" && <DecorateClubModal onClose={() => setSideModal(null)} />}
       {sideModal === "leaderboard" && (
@@ -470,4 +533,3 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     </div>
   );
 }
-
