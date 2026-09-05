@@ -69,7 +69,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [sideModal, setSideModal] = useState<SideModal>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [djBusy, setDjBusy] = useState(false);
-  const [myLightOn, setMyLightOn] = useState(true);
+  const [myLightOn] = useState(true);
   const [giftBusy, setGiftBusy] = useState(false);
   const [banned, setBanned] = useState(false);
   const [welcome, setWelcome] = useState<string>((club as any)?.welcome_text ?? "");
@@ -679,17 +679,52 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [club],
   );
 
-  /** Выход из клуба: сначала глушим звук, потом уходим. */
-  const exitClub = useCallback(() => {
-    stopMusic();
+  /**
+   * Выход из клуба. Если игрок за пультом — сначала передаём очередь,
+   * иначе в зале останется «призрак»: диджей, которого тут уже нет.
+   */
+  const exitClub = useCallback(async () => {
+    if (atBooth) {
+      if (!confirm("Ты за пультом. Выйти и передать очередь дальше?")) return;
+      stopMusic();
+      await djAction("advance", undefined, true);
+    } else {
+      stopMusic();
+    }
     leaveClub();
-  }, [stopMusic, leaveClub]);
+  }, [atBooth, stopMusic, leaveClub, djAction]);
 
-  const toggleLight = () => {
-    const next = !myLightOn;
-    setMyLightOn(next);
-    toggleMyLightShow(next);
-  };
+  /**
+   * Уборка призраков: диджей закрыл вкладку и пропал из зала,
+   * а сессия всё ещё держит его за пультом. Через двадцать секунд
+   * отсутствия любой оставшийся передаёт очередь дальше.
+   */
+  const ghostSince = useRef<number | null>(null);
+  useEffect(() => {
+    const currentDj = session?.dj_vk_id;
+    if (!currentDj || !club || !occupants.length) {
+      ghostSince.current = null;
+      return;
+    }
+    const present = occupants.some((o) => o.vkId === currentDj);
+    if (present) {
+      ghostSince.current = null;
+      return;
+    }
+    if (ghostSince.current === null) {
+      ghostSince.current = Date.now();
+      return;
+    }
+    if (Date.now() - ghostSince.current >= 20000) {
+      ghostSince.current = null;
+      void djAction("advance", undefined, true);
+    }
+  }, [tick, session, occupants, club, djAction]);
+
+  /** Светомузыка у всех включена всегда — отдельной кнопки больше нет. */
+  useEffect(() => {
+    if (myLightOn) toggleMyLightShow(true);
+  }, [myLightOn, toggleMyLightShow]);
 
   if (!club || !profile) return null;
 
@@ -752,13 +787,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 🔈
               </button>
             )}
-            <button
-              className={"btn-round" + (myLightOn ? "" : " btn-round--off")}
-              title="Светомузыка"
-              onClick={toggleLight}
-            >
-              💡
-            </button>
             <button className="btn-round" title="Магазин рук" onClick={() => setSideModal("hands")}>
               {handSkinIconUrl(profile.hand_skin) ? (
                 <img src={handSkinIconUrl(profile.hand_skin)!} alt="" width={18} height={18} />

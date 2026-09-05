@@ -99,8 +99,6 @@ export const ClubScene: React.FC<Props> = (p) => {
         </div>
 
         {/* топ клуба */}
-        <div className="crowd-count" title="Человек в зале">👥 {p.crowd.length + (p.dj ? 1 : 0)}</div>
-
         <div className="top-badge" style={{ right: LAYOUT.topBadge.right, top: LAYOUT.topBadge.top }} onClick={p.onTop}>
           ТОП<br />КЛУБА
         </div>
