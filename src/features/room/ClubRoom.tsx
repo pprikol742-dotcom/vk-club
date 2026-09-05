@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { useClubRealtime, type PresenceMe } from "./useClubRealtime";
 import { getLaunchParams } from "../../lib/vkBridge";
@@ -71,6 +71,9 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
   const [tick, setTick] = useState(0);
 
+  /** чтобы не отправить «следующий» дважды за один и тот же трек */
+  const advancedFor = useRef<string | null>(null);
+
   /** роль в клубе: хозяин сообщества — жёлтая рамка */
   const myRole: ClubRole = useMemo(() => {
     const ownerVk = (club as any)?.owner_vk_id ?? (club as any)?.creator_vk_id;
@@ -97,7 +100,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     position: musicPosition,
     unlock: unlockAudio,
     atBooth,
-    armed: deckArmed,
     loadTrack,
     stop: stopMusic,
   } = useClubMusic(APP_ID, session as any, profile?.vk_id ?? null);
@@ -126,7 +128,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     setWelcome((club as any)?.welcome_text ?? "");
   }, [club]);
 
-  /** секундный тик — чтобы полоса шла и у тех, кто не за пультом */
+  /** секундный тик — полоса трека и проверка конца сета */
   useEffect(() => {
     const t = setInterval(() => setTick((v) => v + 1), 1000);
     return () => clearInterval(t);
@@ -225,35 +227,35 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
 
   /**
    * join требует трек — без него функция отвечает «Сначала выбери трек».
-   * Поэтому кнопка «Стать DJ» открывает выбор музыки, а join уходит уже с треком.
+   * Поэтому «Стать DJ» открывает выбор музыки, а join уходит уже с треком.
    */
   const djAction = useCallback(
     async (
       action: "join" | "leave" | "advance",
       track?: Record<string, unknown>,
-    ): Promise<boolean> => {
-      if (!club) return false;
+      silent = false,
+    ): Promise<any | null> => {
+      if (!club) return null;
       try {
-        await callEdgeFunction("dj-action", {
+        return await callEdgeFunction<any>("dj-action", {
           launchParams: getLaunchParams(),
           club_id: club.id,
           action,
           ...(track ? { track } : {}),
         });
-        return true;
       } catch (e) {
-        alert((e as Error).message);
-        return false;
+        if (!silent) alert((e as Error).message);
+        return null;
       }
     },
     [club],
   );
 
-  /** Выбрали трек из фонотеки, своих или загрузили файл. */
+  /** Выбрали трек: встаём за пульт и сразу включаем звук — жест ещё живой. */
   const pickTrack = useCallback(
     async (t: ClubTrack) => {
       setDjBusy(true);
-      const ok = await djAction("join", {
+      const res = await djAction("join", {
         title: t.title,
         artist: t.artist,
         source: "library",
@@ -261,16 +263,23 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         duration_sec: t.duration ?? 180,
       });
       setDjBusy(false);
-      if (ok) setPickerOpen(false);
+      if (!res) return;
+
+      setPickerOpen(false);
+
+      if (res.playing && t.url) {
+        const ok = await loadTrack(t.url, new Date().toISOString(), true);
+        if (!ok) alert("Браузер не пустил звук — нажми «Зарядить» ещё раз");
+      }
     },
-    [djAction],
+    [djAction, loadTrack],
   );
 
-  /** Выбрали клип по ссылке. */
+  /** Клип играет видео, свой звук не нужен. */
   const pickClip = useCallback(
     async (v: { url: string; artist: string; title: string; duration: number }) => {
       setDjBusy(true);
-      const ok = await djAction("join", {
+      const res = await djAction("join", {
         title: v.title,
         artist: v.artist,
         source: "clip",
@@ -278,22 +287,44 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         duration_sec: v.duration ?? 300,
       });
       setDjBusy(false);
-      if (ok) setPickerOpen(false);
+      if (res) setPickerOpen(false);
     },
     [djAction],
   );
 
-  /** «Зарядить» — единственная кнопка, с которой начинается звук. */
-  const chargeDeck = useCallback(() => {
-    const url = (session as any)?.track_url;
-    if (!url) {
-      setPickerOpen(true);
-      return;
+  /** Завершить сет вручную. */
+  const finishSet = useCallback(() => {
+    stopMusic();
+    void djAction("advance");
+  }, [djAction, stopMusic]);
+
+  /**
+   * Сет — один трек. Доиграл, и пульт уходит следующему в очереди.
+   * Отправляет диджей; если он пропал, через 15 секунд это сделает
+   * любой оставшийся в зале, чтобы клуб не завис.
+   */
+  useEffect(() => {
+    const started = (session as any)?.track_started_at;
+    const duration = (session as any)?.track_duration_sec;
+    const currentDj = session?.dj_vk_id;
+    if (!started || !duration || !currentDj || !profile) return;
+
+    const key = `${currentDj}:${started}`;
+    if (advancedFor.current === key) return;
+
+    const startedMs = Date.parse(started);
+    if (!Number.isFinite(startedMs)) return;
+
+    const elapsed = (Date.now() - startedMs) / 1000;
+    const mine = currentDj === profile.vk_id;
+    const threshold = duration + (mine ? 1 : 15);
+
+    if (elapsed >= threshold) {
+      advancedFor.current = key;
+      if (mine) stopMusic();
+      void djAction("advance", undefined, true);
     }
-    void loadTrack(url, (session as any)?.track_started_at).then((ok) => {
-      if (!ok) alert("Браузер не пустил звук — нажми «Зарядить» ещё раз");
-    });
-  }, [session, loadTrack]);
+  }, [tick, session, profile, djAction, stopMusic]);
 
   const sendChat = useCallback(
     async (text: string) => {
@@ -415,9 +446,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
 
   if (!club || !profile) return null;
 
-  const isDj = djVkId === profile.vk_id;
-  const hasTrack = Boolean((session as any)?.track_url);
-
   return (
     <div onPointerDown={unlockAudio}>
       <ClubPage
@@ -466,22 +494,6 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         onChooseAnotherClub={exitClub}
         extraButtons={
           <>
-            {/* Зарядить: только диджею, только когда трек выбран */}
-            {atBooth && hasTrack && !deckArmed && (
-              <button className="btn-round btn-round--charge" title="Зарядить" onClick={chargeDeck}>
-                ▶
-              </button>
-            )}
-            {atBooth && deckArmed && (
-              <button className="btn-round" title="Снять с пульта" onClick={stopMusic}>
-                ⏹
-              </button>
-            )}
-            {atBooth && (
-              <button className="btn-round" title="Сменить трек" onClick={() => setPickerOpen(true)}>
-                ♪
-              </button>
-            )}
             <button
               className={"btn-round" + (myLightOn ? "" : " btn-round--off")}
               title="Светомузыка"
@@ -496,12 +508,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 "👍"
               )}
             </button>
-            {isDj && (
-              <button
-                className="btn-round"
-                title="Завершить сет"
-                onClick={() => djAction("advance")}
-              >
+            {atBooth && (
+              <button className="btn-round" title="Завершить сет" onClick={finishSet}>
                 ⏭
               </button>
             )}

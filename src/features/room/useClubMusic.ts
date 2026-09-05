@@ -14,7 +14,7 @@ const FALLBACK_CATALOG: ClubTrack[] = [];
 type Session = {
   track_url?: string | null;
   track_started_at?: string | null;
-  track_duration?: number | null;
+  track_duration_sec?: number | null;
   dj_vk_id?: number | null;
 } | null;
 
@@ -30,6 +30,13 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
   const playerRef = useRef<ClubPlayer | null>(null);
   const [position, setPosition] = useState(0);
   const [armed, setArmed] = useState(false);
+
+  /**
+   * Окно тишины после ручного запуска. Сразу после «Зарядить» сессия
+   * ещё не успела прийти по realtime, и без этой паузы наш же эффект
+   * глушил бы только что включённый трек.
+   */
+  const graceUntil = useRef(0);
 
   if (!playerRef.current) playerRef.current = new ClubPlayer();
 
@@ -53,6 +60,7 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
   /* ---- глушение: ушёл с пульта, перекупили, трек сняли ---- */
   useEffect(() => {
     const player = playerRef.current!;
+    if (Date.now() < graceUntil.current) return;
     if (!atBooth || !trackUrl) {
       player.stop();
       setArmed(false);
@@ -64,7 +72,6 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
   useEffect(() => {
     const player = playerRef.current!;
     if (!atBooth || !trackUrl || !player.armed) return;
-    // диджей нажал «дальше» — жест уже был, продолжаем без вопросов
     void player.start(trackUrl, startedAt);
   }, [trackUrl]);
 
@@ -83,19 +90,22 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
   useEffect(() => () => playerRef.current?.stop(), []);
 
   /**
-   * Кнопка «Зарядить». Вешать прямо на onClick, без await до вызова,
-   * иначе браузер посчитает, что жеста уже не было, и звук не пустит.
+   * Кнопка «Зарядить». Вешать прямо на onClick.
+   * force — когда сервер уже подтвердил, что мы за пультом,
+   * а сессия по realtime ещё не дошла.
    */
   const loadTrack = useCallback(
-    async (url?: string | null, at?: string | number | null) => {
+    async (url?: string | null, at?: string | number | null, force = false) => {
       const player = playerRef.current!;
-      if (!atBooth) return false;
+      if (!atBooth && !force) return false;
 
       const src = url ?? trackUrl;
       if (!src) return false;
 
+      graceUntil.current = Date.now() + 8000;
       const ok = await player.start(src, at ?? startedAt);
       setArmed(ok);
+      if (!ok) graceUntil.current = 0;
       return ok;
     },
     [atBooth, trackUrl, startedAt],
@@ -103,6 +113,7 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
 
   /** Снять трек с пульта вручную. */
   const stop = useCallback(() => {
+    graceUntil.current = 0;
     playerRef.current?.stop();
     setArmed(false);
     setPosition(0);

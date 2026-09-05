@@ -1,7 +1,9 @@
 // Очередь диджеев: join / leave / advance.
 // join — встать за пульт с заряженным треком. Если пульт свободен, играем сразу,
 // иначе занимаем место в очереди (повторный join просто меняет трек).
-// advance — текущий диджей закончил сет, зовём следующего вместе с его треком.
+// advance — сет закончен, зовём следующего вместе с его треком.
+//           Обычно это делает сам диджей, но если трек доиграл, а он пропал —
+//           передать очередь может любой, кто остался в зале.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyVkLaunchParams, corsHeaders, type VkLaunchParams } from "../_shared/vkVerify.ts";
 
@@ -139,12 +141,22 @@ Deno.serve(async (req) => {
     if (body.action === "advance") {
       const { data: session } = await supabase
         .from("club_sessions")
-        .select("dj_vk_id")
+        .select("dj_vk_id, track_started_at, track_duration_sec")
         .eq("club_id", body.club_id)
         .maybeSingle();
 
-      // передать очередь может только тот, кто сейчас за пультом
-      if (session?.dj_vk_id && session.dj_vk_id !== vkUserId) {
+      /**
+       * Трек уже доиграл? Тогда передать очередь может кто угодно —
+       * иначе зал зависнет навсегда, если диджей закрыл вкладку.
+       */
+      const startedMs = session?.track_started_at
+        ? Date.parse(session.track_started_at as string)
+        : NaN;
+      const finished =
+        !Number.isFinite(startedMs) ||
+        Date.now() - startedMs >= (((session?.track_duration_sec as number) ?? 0) + 5) * 1000;
+
+      if (session?.dj_vk_id && session.dj_vk_id !== vkUserId && !finished) {
         throw new Error("Только текущий DJ может завершить сет");
       }
 
@@ -156,6 +168,7 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
 
+      // очередь пуста — пульт освобождается
       if (!next) {
         await supabase
           .from("club_sessions")
