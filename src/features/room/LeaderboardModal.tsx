@@ -19,7 +19,7 @@ type BoardKind = "djs" | "receivers" | "givers" | "valuable";
 
 const BOARD_ORDER: BoardKind[] = ["djs", "receivers", "givers", "valuable"];
 const BOARD_META: Record<BoardKind, { title: string; footer: string; rpc: string | null; icon: string }> = {
-  djs: { title: "Топ диджеев клуба", footer: "Топ по очкам за неделю — скоро", rpc: null, icon: "🎵" },
+  djs: { title: "Топ диджеев клуба", footer: "Очко за каждый лайк твоему треку", rpc: "get_top_djs", icon: "🎵" },
   receivers: { title: "Топ популярных", footer: "Топ по количеству полученных подарков", rpc: "get_top_receivers", icon: "🎁" },
   givers: { title: "Топ щедрых", footer: "Топ по количеству отправленных подарков", rpc: "get_top_givers", icon: "💝" },
   valuable: { title: "Топ ценных", footer: "Топ по цене", rpc: "get_top_valuable", icon: "▶️" },

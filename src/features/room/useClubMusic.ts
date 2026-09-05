@@ -12,7 +12,7 @@ import { useUi } from '../../store/uiStore';
 const FALLBACK_CATALOG: ClubTrack[] = [];
 
 /** Как часто подтягиваем позицию к серверной. */
-const RESYNC_MS = 10_000;
+const RESYNC_MS = 30_000;
 
 type Session = {
   track_url?: string | null;
@@ -57,7 +57,11 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
     playerRef.current?.setMuted(muted);
   }, [muted]);
 
-  /* ---- главное: что стоит в сессии, то и играет ---- */
+  /**
+   * Главное: что стоит в сессии, то и играет.
+   * Следим только за ссылкой — время старта меняется отдельно
+   * и перезапускать из-за него трек нельзя, иначе звук заикается.
+   */
   useEffect(() => {
     const player = playerRef.current!;
     let alive = true;
@@ -80,7 +84,7 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
     return () => {
       alive = false;
     };
-  }, [trackUrl, startedAt]);
+  }, [trackUrl]);
 
   /* ---- подтягивание позиции: чтобы зал не расползался ---- */
   useEffect(() => {

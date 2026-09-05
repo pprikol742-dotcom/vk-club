@@ -110,6 +110,8 @@ export class ClubPlayer {
   private unlocked = false;
   /** заряжен ли пульт: только в этом состоянии звук вообще возможен */
   private isArmed = false;
+  /** когда трек включили — первые секунды не трогаем позицию */
+  private startedLocallyAt = 0;
 
   constructor() {
     this.el = new Audio();
@@ -164,22 +166,41 @@ export class ClubPlayer {
   async start(url: string, startedAt?: string | number | null) {
     if (!url) return false;
 
-    if (this.currentUrl !== url) {
+    const isNewTrack = this.currentUrl !== url;
+
+    if (isNewTrack) {
       this.currentUrl = url;
       this.el.src = url;
+      this.startedLocallyAt = Date.now();
     }
     this.isArmed = true;
 
-    if (startedAt != null) {
+    /**
+     * Позицию подтягиваем осторожно. Первые десять секунд после запуска
+     * не трогаем вовсе: сервер отдаёт своё время старта с задержкой,
+     * и ранняя перемотка слышна как обрыв и рывок назад.
+     * Дальше правим, только если разошлись больше чем на четыре секунды.
+     */
+    const settled = Date.now() - this.startedLocallyAt > 10_000;
+
+    if (startedAt != null && (isNewTrack || settled)) {
       const started = typeof startedAt === 'number' ? startedAt : Date.parse(startedAt);
       const offset = Math.max(0, (Date.now() - started) / 1000);
-      if (Number.isFinite(offset) && Math.abs(this.el.currentTime - offset) > 1.5) {
+      const drift = Math.abs(this.el.currentTime - offset);
+      const limit = isNewTrack ? 2.5 : 4;
+
+      if (Number.isFinite(offset) && drift > limit) {
         try {
           this.el.currentTime = offset;
         } catch {
           /* браузер ещё не готов перематывать */
         }
       }
+    }
+
+    // уже играет этот же трек — второй раз play() не нужен
+    if (!isNewTrack && !this.el.paused) {
+      return true;
     }
 
     try {
