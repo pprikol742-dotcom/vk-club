@@ -41,7 +41,11 @@ export function ClubsScreen({ votes = 0, onEnter, onCreate, onHelp }: Props) {
         return {
           id: c.id,
           title: c.group_name ?? c.name ?? 'Клуб',
-          cover: c.photo_url ?? c.avatar_url ?? c.cover_url ?? PLACEHOLDER,
+          cover: c.photo_url ?? c.avatar_url ?? PLACEHOLDER,
+          // обложка берётся из паблика по id сообщества
+          vkGroupId: c.vk_group_id ?? null,
+          // если уже сохраняли — покажется мгновенно, без запроса к ВК
+          coverUrl: c.cover_url ?? null,
           online: c.online_count ?? c.members_online ?? (s?.dj_vk_id ? 1 : 0),
           ownerName: c.owner_name ?? '',
           nowPlaying: playing,
