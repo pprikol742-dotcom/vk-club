@@ -1,4 +1,7 @@
 import React from 'react';
+import ClubCover from './ClubCover';
+import './ClubCover.css';
+import { supabase } from '../../lib/supabase';
 
 export interface ClubCard {
   id: string;
@@ -8,27 +11,22 @@ export interface ClubCard {
   ownerName: string;
   /** что играет прямо сейчас */
   nowPlaying?: string;
+  /** id сообщества ВК — из него берём обложку */
+  vkGroupId?: number | null;
+  /** уже сохранённая обложка, показывается мгновенно */
+  coverUrl?: string | null;
 }
 
 interface Props {
   clubs: ClubCard[];
-  votes: number;
+  votes?: number;
   onEnter: (clubId: string) => void;
   onCreate: () => void;
-  onHelp: () => void;
+  onHelp?: () => void;
 }
 
-export const ClubList: React.FC<Props> = ({ clubs, votes, onEnter, onCreate, onHelp }) => (
+export const ClubList: React.FC<Props> = ({ clubs, onEnter, onCreate }) => (
   <div className="clublist-page">
-    <div className="topbar">
-      <div className="topbar__left">▶ В Клубе</div>
-      <div className="topbar__right">
-        <span className="topbar__link" onClick={onHelp}>Помощь</span>
-        <span className="topbar__votes">У вас <b>{votes}</b> голосов</span>
-        <span className="topbar__link">Действия ⌄</span>
-      </div>
-    </div>
-
     <button className="create-club-tab" onClick={onCreate}>
       <span>⊕</span> Создай свой клуб
     </button>
@@ -40,7 +38,14 @@ export const ClubList: React.FC<Props> = ({ clubs, votes, onEnter, onCreate, onH
           <button key={c.id} className="club-card" onClick={() => onEnter(c.id)}>
             <div className="club-card__title">{c.title}</div>
             <div className="club-card__cover">
-              <img src={c.cover} alt="" />
+              <ClubCover
+                vkGroupId={c.vkGroupId}
+                cachedUrl={c.coverUrl}
+                alt={c.title}
+                onResolved={(url) => {
+                  void supabase.rpc('set_club_cover', { p_club_id: c.id, p_url: url });
+                }}
+              />
               <span className="club-card__online">👤 {c.online}</span>
             </div>
             <div className="club-card__owner">▶ {c.ownerName}</div>
