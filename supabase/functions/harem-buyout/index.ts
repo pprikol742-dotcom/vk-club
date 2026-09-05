@@ -1,6 +1,6 @@
 // "Перекуп": игрок платит монеты, чтобы стать владельцем другого игрока в клубе.
-// Если у цели уже есть владелец — тому возвращается его прошлая цена (компенсация),
-// а новая ставка должна быть строго больше текущей.
+// Новая ставка должна быть строго больше текущей. Прошлому владельцу
+// его деньги не возвращаются — ставка сгорает.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyVkLaunchParams, corsHeaders, type VkLaunchParams } from "../_shared/vkVerify.ts";
 
@@ -86,21 +86,8 @@ Deno.serve(async (req) => {
         .eq("vk_id", vkUserId);
     }
 
-    // возвращаем компенсацию прошлому владельцу
-    if (existing) {
-      const { data: prevOwner } = await supabase
-        .from("profiles")
-        .select("coins, unlimited_coins")
-        .eq("vk_id", existing.owner_vk_id)
-        .maybeSingle();
-
-      if (prevOwner && !prevOwner.unlimited_coins) {
-        await supabase
-          .from("profiles")
-          .update({ coins: prevOwner.coins + existing.price_paid })
-          .eq("vk_id", existing.owner_vk_id);
-      }
-    }
+    // Прошлому владельцу монеты не возвращаются: ставка сгорает,
+    // поэтому терять своих людей по-настоящему обидно.
 
     const { data: ownership, error: ownErr } = await supabase
       .from("ownerships")
