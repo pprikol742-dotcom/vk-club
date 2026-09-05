@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
     const { data: profile, error: profErr } = await supabase
       .from("profiles")
-      .select("coins, owned_hand_skins")
+      .select("coins, owned_hand_skins, unlimited_coins")
       .eq("vk_id", vkUserId)
       .single();
     if (profErr) throw profErr;
@@ -40,15 +40,18 @@ Deno.serve(async (req) => {
       gift.category === "hand_skin" && (profile.owned_hand_skins ?? []).includes(gift.id);
     const priceToCharge = alreadyOwnedHandSkin ? 0 : gift.price;
 
-    if (profile.coins < priceToCharge) {
+    // безлимитный баланс: платить не нужно, дарить можно всем и сколько угодно
+    const unlimited = Boolean(profile.unlimited_coins);
+
+    if (!unlimited && profile.coins < priceToCharge) {
       return new Response(JSON.stringify({ error: "Недостаточно монет" }), {
         status: 402,
         headers: { ...corsHeaders(), "Content-Type": "application/json" },
       });
     }
 
-    // списываем монеты (0, если скин уже куплен — просто переключение)
-    if (priceToCharge > 0) {
+    // списываем монеты (0, если скин уже куплен или баланс безлимитный)
+    if (priceToCharge > 0 && !unlimited) {
       const { error: deductErr } = await supabase
         .from("profiles")
         .update({ coins: profile.coins - priceToCharge })
@@ -81,7 +84,7 @@ Deno.serve(async (req) => {
       if (skinErr) throw skinErr;
     }
 
-    return new Response(JSON.stringify({ ok: true, spent: priceToCharge }), {
+    return new Response(JSON.stringify({ ok: true, spent: unlimited ? 0 : priceToCharge }), {
       headers: { ...corsHeaders(), "Content-Type": "application/json" },
     });
   } catch (err) {

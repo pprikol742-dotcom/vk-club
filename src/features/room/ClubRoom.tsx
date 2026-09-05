@@ -23,6 +23,9 @@ import { useClubMusic } from "./useClubMusic";
 const APP_URL = "https://vk.com/app54746228";
 const APP_ID = 54746228;
 
+/** Автор игры: только у него есть тумблер защиты гарема. */
+const ADMIN_VK_ID = 1092428497;
+
 /** Подарки клабберу и диджею — иконки берём из твоего giftIcons. */
 const withIcons = (list: Array<{ id: string; name: string; price: number }>): GiftItem[] =>
   list.map((g) => ({ ...g, icon: giftIconUrl(g.id) ?? undefined }));
@@ -72,6 +75,9 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
   const [tick, setTick] = useState(0);
+  const [haremLocked, setHaremLocked] = useState<boolean>(
+    Boolean((useAppStore.getState().profile as any)?.harem_locked),
+  );
 
   /** чтобы не отправить «следующий» дважды за один и тот же трек */
   const advancedFor = useRef<string | null>(null);
@@ -96,7 +102,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [profile, myRole],
   );
 
-  const { toggleMyLightShow, occupants } = useClubRealtime(club?.id ?? null, me);
+  const { toggleMyLightShow, occupants, reactions, sendReaction } = useClubRealtime(club?.id ?? null, me);
 
   const {
     position: musicPosition,
@@ -221,6 +227,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     };
   }, [session, shownPosition]);
 
+  /** Поднятые руки над аватарками: ключи приводим к строкам, как ждёт сцена. */
+  const uiReactions = useMemo(() => {
+    const out: Record<string, { kind: "up" | "down"; skin: string | null }> = {};
+    for (const [vkId, r] of Object.entries(reactions ?? {})) {
+      out[String(vkId)] = { kind: r.kind, skin: r.skin };
+    }
+    return out;
+  }, [reactions]);
+
   const messages: UiMessage[] = useMemo(() => {
     const nameOf = (vkId: number) =>
       occupants.find((o) => o.vkId === vkId)?.name ?? `id${vkId}`;
@@ -255,6 +270,51 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     },
     [club, addCoins],
   );
+
+  /** Лайк или дизлайк текущему треку. */
+  const vote = useCallback(
+    async (v: "up" | "down") => {
+      if (!club || !profile) return;
+      const { data, error } = await supabase.rpc("vote_track", {
+        p_club: club.id,
+        p_vk_id: profile.vk_id,
+        p_vote: v,
+      });
+      if (error) {
+        alert(error.message);
+        return;
+      }
+      // поднимаем руку всем в зале
+      sendReaction(v, handSkinIconUrl(profile.hand_skin) ?? null);
+
+      const row: any = Array.isArray(data) ? data[0] : data;
+      if (row && session) {
+        setSession({ ...(session as any), likes: row.likes, dislikes: row.dislikes });
+      }
+    },
+    [club, profile, session, sendReaction, setSession],
+  );
+
+  /** Похлопать: рука вверх без голоса. */
+  const clap = useCallback(() => {
+    if (!profile) return;
+    sendReaction("up", handSkinIconUrl(profile.hand_skin) ?? null);
+  }, [profile, sendReaction]);
+
+  /** Тумблер защиты гарема — только для автора игры. */
+  const toggleHaremLock = useCallback(async () => {
+    if (!profile) return;
+    const next = !haremLocked;
+    setHaremLocked(next);
+    const { error } = await supabase.rpc("set_harem_lock", {
+      p_vk_id: profile.vk_id,
+      p_value: next,
+    });
+    if (error) {
+      setHaremLocked(!next);
+      alert(error.message);
+    }
+  }, [profile, haremLocked]);
 
   /**
    * join требует трек — без него функция отвечает «Сначала выбери трек».
@@ -389,6 +449,37 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       };
       setOpenedProfile(base);
 
+      // кто владеет этим игроком в клубе — мини-аватарка и цена перекупа
+      let owner: ClubberProfile["owner"] = null;
+      let buyoutPrice = 10;
+      try {
+        const { data: own } = await supabase
+          .from("ownerships")
+          .select("owner_vk_id, price_paid")
+          .eq("club_id", club!.id)
+          .eq("target_vk_id", vkId)
+          .maybeSingle();
+
+        if (own?.owner_vk_id) {
+          buyoutPrice = (own.price_paid ?? 0) + 1;
+          const oc = occupants.find((x) => x.vkId === own.owner_vk_id);
+          const { data: op } = await supabase
+            .from("profiles")
+            .select("first_name, avatar_url")
+            .eq("vk_id", own.owner_vk_id)
+            .maybeSingle();
+
+          owner = {
+            id: String(own.owner_vk_id),
+            name: (op as any)?.first_name ?? oc?.name ?? `id${own.owner_vk_id}`,
+            photo: (op as any)?.avatar_url ?? oc?.photo ?? "",
+          };
+        }
+        setOpenedProfile({ ...base, owner, buyoutPrice });
+      } catch {
+        /* владельца нет или таблица недоступна */
+      }
+
       try {
         const { data } = await supabase
           .from("profiles")
@@ -407,7 +498,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
           played: (data as any).tracks_played ?? 0,
           giftsGot: (data as any).gifts_received ?? 0,
           giftsSent: (data as any).gifts_sent ?? 0,
-          buyoutPrice: (data as any).buyout_price ?? 32,
+          owner,
+          buyoutPrice,
         });
       } catch {
         /* остаёмся на базовой карточке */
@@ -436,13 +528,14 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
           launchParams: getLaunchParams(),
           club_id: club.id,
           target_vk_id: Number(userId),
+          offer_price: openedProfile?.buyoutPrice,
         });
         addCoins(-(res?.spent ?? 0));
       } catch (e) {
         alert((e as Error).message);
       }
     },
-    [club, addCoins],
+    [club, addCoins, openedProfile],
   );
 
   const saveWelcome = useCallback(
@@ -487,6 +580,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         coins={profile.coins}
         votes={(profile as any).votes ?? 0}
         track={track}
+        reactions={uiReactions}
         dj={dj}
         crowd={crowd}
         queuePosition={(session as any)?.my_queue_position ?? null}
@@ -502,11 +596,11 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         giftBusy={giftBusy}
         onExit={exitClub}
         onBecomeDj={() => setPickerOpen(true)}
-        onVote={() => {}}
+        onVote={vote}
         onSendGift={sendGift}
         onSkipQueue={() => {}}
         onSendMessage={sendChat}
-        onClap={() => {}}
+        onClap={clap}
         onDecorate={() => setSideModal("decorate")}
         onOpenShop={() => setSideModal("hands")}
         onOpenTop={() => setSideModal("leaderboard")}
@@ -542,6 +636,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 "👍"
               )}
             </button>
+            {profile.vk_id === ADMIN_VK_ID && (
+              <button
+                className={"btn-round" + (haremLocked ? "" : " btn-round--off")}
+                title={haremLocked ? "Гарем закрыт от перекупа" : "Гарем открыт"}
+                onClick={toggleHaremLock}
+              >
+                {haremLocked ? "🔒" : "🔓"}
+              </button>
+            )}
             {atBooth && (
               <button className="btn-round" title="Завершить сет" onClick={finishSet}>
                 ⏭

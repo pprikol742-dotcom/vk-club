@@ -44,22 +44,43 @@
 }
 @keyframes ballSpin { to { transform: translate(-50%,-50%) rotate(360deg) } }
 
-/* ---------- лучи ---------- */
-.fx-beams { position: absolute; transform: translate(-50%,-50%); }
+/* ---------- лучи прожекторов ---------- */
+/* Крупнее и ярче: свет должен доставать до танцпола и заливать его. */
+.fx-beams { position: absolute; transform: translate(-50%,-50%); z-index: 2; }
 .fx-beam {
-  position: absolute; left: 0; top: 0; width: 60px; height: 220px;
+  position: absolute; left: 0; top: 0; width: 150px; height: 560px;
   transform-origin: 50% 0;
-  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
-  filter: blur(2px); opacity: .5;
+  clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+  filter: blur(6px); opacity: .78;
+  mix-blend-mode: screen;
   animation: beamSway 7s ease-in-out infinite;
 }
-.fx-beam--cyan   { background: linear-gradient(180deg, rgba(0,229,255,.75), transparent); animation-delay: 0s;   }
-.fx-beam--green  { background: linear-gradient(180deg, rgba(80,255,150,.7), transparent);  animation-delay: -1.7s; }
-.fx-beam--pink   { background: linear-gradient(180deg, rgba(255,62,200,.75), transparent); animation-delay: -3.4s; }
-.fx-beam--violet { background: linear-gradient(180deg, rgba(170,90,255,.7), transparent);  animation-delay: -5.1s; }
+/* мягкое пятно света там, где луч ложится на пол */
+.fx-beam::after {
+  content: ''; position: absolute; left: 50%; bottom: -26px;
+  width: 210px; height: 62px; transform: translateX(-50%);
+  border-radius: 50%; filter: blur(14px); opacity: .55;
+  background: inherit;
+}
+.fx-beam--cyan {
+  background: linear-gradient(180deg, rgba(0,229,255,.95), rgba(0,229,255,.28) 55%, transparent);
+  animation-delay: 0s;
+}
+.fx-beam--green {
+  background: linear-gradient(180deg, rgba(80,255,150,.9), rgba(80,255,150,.26) 55%, transparent);
+  animation-delay: -1.7s;
+}
+.fx-beam--pink {
+  background: linear-gradient(180deg, rgba(255,62,200,.95), rgba(255,62,200,.28) 55%, transparent);
+  animation-delay: -3.4s;
+}
+.fx-beam--violet {
+  background: linear-gradient(180deg, rgba(170,90,255,.9), rgba(170,90,255,.26) 55%, transparent);
+  animation-delay: -5.1s;
+}
 @keyframes beamSway {
-  0%,100% { transform: translate(-50%,0) rotate(-34deg) }
-  50%     { transform: translate(-50%,0) rotate(34deg) }
+  0%,100% { transform: translate(-50%,0) rotate(-42deg) }
+  50%     { transform: translate(-50%,0) rotate(42deg) }
 }
 
 /* ---------- дым ---------- */
