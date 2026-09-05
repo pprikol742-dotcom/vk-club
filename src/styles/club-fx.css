@@ -94,9 +94,12 @@
 .fx-smoke__puff--1 { left: 8%;  animation-delay: 0s;    }
 .fx-smoke__puff--2 { left: 38%; animation-delay: -6s;   }
 .fx-smoke__puff--3 { left: 66%; animation-delay: -11s;  }
+.fx-smoke__puff--4 { left: 14%; animation-delay: -4s;  transform: scale(1.35); opacity: .55 }
+.fx-smoke__puff--5 { left: 48%; animation-delay: -8s;  transform: scale(1.5);  opacity: .5  }
+.fx-smoke__puff--6 { left: 82%; animation-delay: -14s; transform: scale(1.2);  opacity: .6  }
 @keyframes smokeDrift {
   0%,100% { transform: translate(0,0) scale(1);      opacity: .5 }
-  50%     { transform: translate(30px,-14px) scale(1.25); opacity: .8 }
+  50%     { transform: translate(34px,-18px) scale(1.35); opacity: .9 }
 }
 
 /* ---------- гирлянда по краю сцены ---------- */

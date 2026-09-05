@@ -114,7 +114,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [profile, myRole],
   );
 
-  const { toggleMyLightShow, occupants, reactions, sendReaction } = useClubRealtime(club?.id ?? null, me);
+  const { toggleMyLightShow, occupants, reactions, sendReaction, clearReactions } =
+    useClubRealtime(club?.id ?? null, me);
 
   const {
     position: musicPosition,
@@ -193,16 +194,24 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     };
   }, [club?.id, profile]);
 
-  /** Новый трек — танцпол замирает, голосовать можно заново. */
+  /** Ключ текущего трека — по нему отсекаем руки с прошлого. */
+  const trackKey: string | null = (session as any)?.track_started_at ?? null;
+
+  /** Новый трек — танцпол замирает, руки опускаются, голос сбрасывается. */
   useEffect(() => {
     setDancers(new Set());
     setMyVote(null);
-  }, [(session as any)?.track_started_at]);
+    clearReactions();
+  }, [trackKey, clearReactions]);
 
-  /** Лайкнул — танцует до конца трека. Рука гаснет, танец остаётся. */
+  /**
+   * Танцует только тот, кто поставил лайк текущему треку.
+   * Хлопок руку поднимает, но танец не включает.
+   */
   useEffect(() => {
+    if (!trackKey) return;
     const ups = Object.entries(reactions ?? {})
-      .filter(([, r]) => r.kind === "up")
+      .filter(([, r]) => r.kind === "up" && r.dance && r.trackKey === trackKey)
       .map(([vkId]) => String(vkId));
     if (!ups.length) return;
 
@@ -212,7 +221,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       for (const id of ups) if (!next.has(id)) { next.add(id); changed = true; }
       return changed ? next : prev;
     });
-  }, [reactions]);
+  }, [reactions, trackKey]);
 
   /** секундный тик — полоса трека и проверка конца сета */
   useEffect(() => {
@@ -324,21 +333,26 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   /** Лайк или дизлайк текущему треку. */
   const vote = useCallback(
     async (v: "up" | "down") => {
-      if (!club || !profile) return;
+      if (!club || !profile || myVote) return;
+
+      // рука и танец поднимаются сразу — ждать сервер незачем
+      setMyVote(v);
+      sendReaction(v, handSkinIconUrl(profile.hand_skin) ?? null, {
+        dance: v === "up",
+        trackKey,
+      });
+      if (v === "up") setDancers((prev) => new Set(prev).add(String(profile.vk_id)));
+
       const { data, error } = await supabase.rpc("vote_track", {
         p_club: club.id,
         p_vk_id: profile.vk_id,
         p_vote: v,
       });
       if (error) {
+        // сервер не принял голос — откатываем залипание кнопки
+        setMyVote(null);
         alert(error.message);
         return;
-      }
-      setMyVote(v);
-      // поднимаем руку всем в зале; танец включится от неё же
-      sendReaction(v, handSkinIconUrl(profile.hand_skin) ?? null);
-      if (v === "up") {
-        setDancers((prev) => new Set(prev).add(String(profile.vk_id)));
       }
 
       const row: any = Array.isArray(data) ? data[0] : data;
@@ -346,14 +360,18 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         setSession({ ...(session as any), likes: row.likes, dislikes: row.dislikes });
       }
     },
-    [club, profile, session, sendReaction, setSession],
+    [club, profile, session, sendReaction, setSession, myVote, trackKey],
   );
 
   /** Похлопать: рука вверх без голоса. */
   const clap = useCallback(() => {
     if (!profile) return;
-    sendReaction("up", handSkinIconUrl(profile.hand_skin) ?? null);
-  }, [profile, sendReaction]);
+    // рука поднимается, но танец не начинается — танцует только лайк
+    sendReaction("up", handSkinIconUrl(profile.hand_skin) ?? null, {
+      dance: false,
+      trackKey,
+    });
+  }, [profile, sendReaction, trackKey]);
 
   /** Переключить режим комнаты: радио или очередь. */
   const switchMode = useCallback(async () => {

@@ -29,6 +29,9 @@ export const ClubFxLayer: React.FC<{ fx: FxSettings }> = ({ fx }) => (
         <span className="fx-smoke__puff fx-smoke__puff--1" />
         <span className="fx-smoke__puff fx-smoke__puff--2" />
         <span className="fx-smoke__puff fx-smoke__puff--3" />
+        <span className="fx-smoke__puff fx-smoke__puff--4" />
+        <span className="fx-smoke__puff fx-smoke__puff--5" />
+        <span className="fx-smoke__puff fx-smoke__puff--6" />
       </div>
     )}
 

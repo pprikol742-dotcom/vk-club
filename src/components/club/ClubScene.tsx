@@ -7,9 +7,9 @@ import { NeonSign } from './NeonSign';
 import { ClubFxLayer } from './ClubFxLayer';
 import { EffectsMenu } from './EffectsMenu';
 import { LayoutTuner, tuned } from './LayoutTuner';
+import { frameOf, type ClubRole } from '../../config/frames';
 import { VideoScreen } from './VideoScreen';
 import { Icon, ICONS } from '../ui/Icon';
-import { canEditWelcome, frameOf, type ClubRole } from '../../config/frames';
 
 export type { Clubber };
 
@@ -60,7 +60,7 @@ interface Props {
 
 export const ClubScene: React.FC<Props> = (p) => {
   const room = ROOMS[p.roomId];
-  const { muted, toggleMute, fx, toggleFxMenu, toggleTuner, tweak, avatarSize } = useUi();
+  const { muted, toggleMute, fx, toggleFxMenu, tweak, avatarSize } = useUi();
   const meIsDj = !!p.dj && p.dj.id === p.myId;
 
   const cssVars = {
@@ -80,8 +80,6 @@ export const ClubScene: React.FC<Props> = (p) => {
           >
             {meIsDj ? '🔒' : '🚪'} ВЫХОД
           </button>
-          <button className="btn-round" title="Декор клуба" onClick={p.onDecorate}>♠</button>
-          <button className="btn-round" title="Группа клуба" onClick={() => useUi.getState().open('clubGroup')}>⬆</button>
           <button
             className={'btn-round' + (muted ? ' btn-round--off' : '')}
             title={muted ? 'Включить звук' : 'Выключить звук'}
@@ -89,14 +87,8 @@ export const ClubScene: React.FC<Props> = (p) => {
           >
             {muted ? '🔇' : '🔊'}
           </button>
-          <button className="btn-round" title="Похлопать" onClick={p.onClap}>👏</button>
-          <button className="btn-round" title="Снимок клуба" onClick={p.onScreenshot}>📷</button>
-          {canEditWelcome(p.myRole) && (
-            <button className="btn-round" title="Приветствие клуба" onClick={p.onEditWelcome}>📝</button>
-          )}
           <button className="btn-round" title="Свет и эффекты" onClick={toggleFxMenu}>⚙</button>
-          <button className="btn-round" title="Подгонка раскладки" onClick={toggleTuner}>📐</button>
-          <button className="btn-round" title="Помощь" onClick={p.onHelp}>?</button>
+          <button className="btn-round" title="Как играть" onClick={p.onHelp}>?</button>
           {p.extraButtons}
         </div>
 

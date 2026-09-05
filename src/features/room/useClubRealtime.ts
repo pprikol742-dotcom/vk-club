@@ -24,6 +24,10 @@ export interface Reaction {
   kind: 'up' | 'down';
   /** картинка скина руки */
   skin: string | null;
+  /** момент старта трека, за который поднята рука */
+  trackKey: string | null;
+  /** лайк запускает танец, хлопок — нет */
+  dance: boolean;
   until: number;
 }
 
@@ -91,11 +95,21 @@ export function useClubRealtime(clubId: string | null, me: PresenceMe | null) {
         },
       )
       .on("broadcast", { event: "reaction" }, ({ payload }) => {
-        const r = payload as { vkId: number; kind: "up" | "down"; skin: string | null };
+        const r = payload as {
+          vkId: number; kind: "up" | "down"; skin: string | null;
+          trackKey?: string | null; dance?: boolean;
+        };
         if (!r?.vkId) return;
         setReactions((prev) => ({
           ...prev,
-          [r.vkId]: { ...r, until: Date.now() + REACTION_MS },
+          [r.vkId]: {
+            vkId: r.vkId,
+            kind: r.kind,
+            skin: r.skin ?? null,
+            trackKey: r.trackKey ?? null,
+            dance: Boolean(r.dance),
+            until: Date.now() + REACTION_MS,
+          },
         }));
         setTimeout(() => {
           setReactions((prev) => {
@@ -166,22 +180,37 @@ export function useClubRealtime(clubId: string | null, me: PresenceMe | null) {
     [me, setLightShow],
   );
 
-  /** Показать всем поднятую руку. */
+  /**
+   * Показать всем поднятую руку.
+   * dance — рука от лайка, она же запускает танец до конца трека.
+   * trackKey — время старта трека, чтобы старые руки не оживали на новом.
+   */
   const sendReaction = useCallback(
-    (kind: "up" | "down", skin: string | null) => {
+    (
+      kind: "up" | "down",
+      skin: string | null,
+      opts?: { dance?: boolean; trackKey?: string | null },
+    ) => {
       if (!me) return;
-      channelRef.current?.send({
-        type: "broadcast",
-        event: "reaction",
-        payload: { vkId: me.vkId, kind, skin },
-      });
+      const payload = {
+        vkId: me.vkId,
+        kind,
+        skin,
+        dance: Boolean(opts?.dance),
+        trackKey: opts?.trackKey ?? null,
+      };
+      channelRef.current?.send({ type: "broadcast", event: "reaction", payload });
+      // свою руку показываем сразу, не дожидаясь эха от сервера
       setReactions((prev) => ({
         ...prev,
-        [me.vkId]: { vkId: me.vkId, kind, skin, until: Date.now() + REACTION_MS },
+        [me.vkId]: { ...payload, until: Date.now() + REACTION_MS },
       }));
     },
     [me],
   );
 
-  return { toggleMyLightShow, occupants, reactions, sendReaction };
+  /** Смена трека — стираем все поднятые руки. */
+  const clearReactions = useCallback(() => setReactions({}), []);
+
+  return { toggleMyLightShow, occupants, reactions, sendReaction, clearReactions };
 }

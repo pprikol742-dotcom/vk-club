@@ -24,15 +24,15 @@ export interface FxSettings {
   dance: boolean;
 }
 
-export const FX_LABELS: Record<keyof FxSettings, string> = {
+/**
+ * В меню показываем только то, что игрок реально хочет крутить.
+ * Гирлянда, неон, блики и танец живут всегда и в списке не мозолят глаза.
+ */
+export const FX_LABELS: Partial<Record<keyof FxSettings, string>> = {
   signFlicker: 'Мерцание вывески',
   discoBall: 'Зеркальный шар',
   beams: 'Лучи света',
   smoke: 'Дым',
-  bulbs: 'Гирлянда',
-  wallNeon: 'Неон на стенах',
-  floorLights: 'Блики на полу',
-  dance: 'Танцующие аватарки',
 };
 
 const FX_DEFAULT: FxSettings = {
