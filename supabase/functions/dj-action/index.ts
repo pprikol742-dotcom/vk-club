@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const body = await req.json() as {
       launchParams: VkLaunchParams;
       club_id: string;
-      action: "join" | "leave" | "advance";
+      action: "join" | "leave" | "advance" | "radio";
       track?: TrackInput;
     };
 
@@ -52,10 +52,49 @@ Deno.serve(async (req) => {
       track_video_url: t?.video_url ?? null,
       track_duration_sec: t?.duration_sec ?? null,
       track_started_at: t ? new Date().toISOString() : null,
+      is_radio: false,
       likes: 0,
       dislikes: 0,
       updated_at: new Date().toISOString(),
     });
+
+    /** Режим комнаты: 'radio' или 'queue'. */
+    const clubMode = async (): Promise<string> => {
+      const { data } = await supabase
+        .from("clubs").select("mode").eq("id", body.club_id).maybeSingle();
+      return (data?.mode as string) ?? "queue";
+    };
+
+    /** Ставит случайный трек из фонотеки комнаты без живого диджея. */
+    const startRadio = async (): Promise<boolean> => {
+      const { data: t } = await supabase
+        .rpc("random_club_track", { p_club: body.club_id })
+        .maybeSingle();
+
+      if (!t?.url) return false;
+
+      await supabase.from("club_sessions").upsert(
+        {
+          club_id: body.club_id,
+          dj_vk_id: null,
+          track_title: t.title,
+          track_artist: t.artist,
+          track_source: "library",
+          track_url: t.url,
+          track_video_url: null,
+          track_duration_sec: t.duration ?? 180,
+          track_started_at: new Date().toISOString(),
+          is_radio: true,
+          likes: 0,
+          dislikes: 0,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "club_id" },
+      );
+
+      await supabase.rpc("bump_track_plays", { p_track_id: String(t.id) });
+      return true;
+    };
 
     if (body.action === "join") {
       if (!body.track) throw new Error("Сначала выбери трек");
@@ -88,6 +127,11 @@ Deno.serve(async (req) => {
         await supabase.rpc("shift_dj_queue_positions", { p_club_id: body.club_id });
 
         return json({ ok: true, playing: true });
+      }
+
+      // в радио-комнате очереди нет — пульт либо свободен, либо занят
+      if (await clubMode() === "radio") {
+        throw new Error("За пультом уже кто-то есть, дождись конца трека");
       }
 
       // за пультом кто-то другой — встаём в очередь.
@@ -124,6 +168,22 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       return json({ ok: true, playing: false, queueEntry: data });
+    }
+
+    // Радио: включить фонотеку комнаты. Зовёт любой клиент,
+    // когда за пультом пусто, а комната работает в режиме радио.
+    if (body.action === "radio") {
+      if (await clubMode() !== "radio") {
+        return json({ ok: false, reason: "Комната работает по очереди" });
+      }
+
+      const { data: session } = await supabase
+        .from("club_sessions").select("dj_vk_id").eq("club_id", body.club_id).maybeSingle();
+
+      if (session?.dj_vk_id) return json({ ok: false, reason: "За пультом диджей" });
+
+      const started = await startRadio();
+      return json({ ok: started, radio: started });
     }
 
     if (body.action === "leave") {
@@ -168,7 +228,7 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
 
-      // очередь пуста — пульт освобождается
+      // очередь пуста — пульт освобождается, а в радио-комнате включается фонотека
       if (!next) {
         await supabase
           .from("club_sessions")
@@ -176,6 +236,12 @@ Deno.serve(async (req) => {
             { club_id: body.club_id, dj_vk_id: null, ...sessionTrack(null) },
             { onConflict: "club_id" },
           );
+
+        if (await clubMode() === "radio") {
+          const started = await startRadio();
+          return json({ ok: true, nextDj: null, radio: started });
+        }
+
         return json({ ok: true, nextDj: null });
       }
 

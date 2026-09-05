@@ -1,0 +1,39 @@
+/* Значок режима на обложке клуба */
+.club-card__mode {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  color: #fff;
+  backdrop-filter: blur(4px);
+  z-index: 3;
+}
+.club-card__mode--radio {
+  background: rgba(236, 72, 153, .85);
+  box-shadow: 0 0 10px rgba(236, 72, 153, .6);
+}
+.club-card__mode--queue {
+  background: rgba(99, 102, 241, .85);
+  box-shadow: 0 0 10px rgba(99, 102, 241, .55);
+}
+
+/* Кнопка в списке треков: положить в клуб / убрать */
+.music__load--ghost {
+  background: transparent;
+  border: 1px solid rgba(168, 85, 247, .6);
+  color: #d8b4fe;
+  min-width: 34px;
+  padding: 4px 6px;
+}
+.music__load--danger {
+  background: rgba(220, 38, 38, .18);
+  border: 1px solid rgba(248, 113, 113, .6);
+  color: #fca5a5;
+  min-width: 34px;
+  padding: 4px 6px;
+}

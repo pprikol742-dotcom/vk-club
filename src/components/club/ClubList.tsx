@@ -15,6 +15,8 @@ export interface ClubCard {
   vkGroupId?: number | null;
   /** уже сохранённая обложка, показывается мгновенно */
   coverUrl?: string | null;
+  /** режим комнаты: радио или очередь */
+  mode?: 'radio' | 'queue';
 }
 
 interface Props {
@@ -47,6 +49,9 @@ export const ClubList: React.FC<Props> = ({ clubs, onEnter, onCreate }) => (
                 }}
               />
               <span className="club-card__online">👤 {c.online}</span>
+              <span className={'club-card__mode club-card__mode--' + (c.mode ?? 'queue')}>
+                {c.mode === 'radio' ? '📻 Радио' : '🎚 Очередь'}
+              </span>
             </div>
             <div className="club-card__owner">▶ {c.ownerName}</div>
             {c.nowPlaying && <div className="club-card__track">{c.nowPlaying}</div>}

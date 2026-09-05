@@ -8,6 +8,7 @@ import { HandSkinShop } from "../gifts/HandSkinShop";
 import { DecorateClubModal } from "./DecorateClubModal";
 import { LeaderboardModal } from "./LeaderboardModal";
 import { MusicPickerModal } from "./MusicPickerModal";
+import { canManageClub } from "../../lib/library";
 import { handSkinIconUrl } from "../../lib/handSkins";
 import { giftIconUrl } from "../../lib/giftIcons";
 
@@ -75,12 +76,19 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
   const [tick, setTick] = useState(0);
+  const [canManage, setCanManage] = useState(false);
+  const [mode, setMode] = useState<"radio" | "queue">(
+    ((useAppStore.getState().club as any)?.mode as "radio" | "queue") ?? "queue",
+  );
   const [haremLocked, setHaremLocked] = useState<boolean>(
     Boolean((useAppStore.getState().profile as any)?.harem_locked),
   );
 
   /** чтобы не отправить «следующий» дважды за один и тот же трек */
   const advancedFor = useRef<string | null>(null);
+
+  /** чтобы не долбить сервер просьбами включить радио */
+  const radioAsked = useRef(false);
 
   /** роль в клубе: хозяин сообщества — жёлтая рамка */
   const myRole: ClubRole = useMemo(() => {
@@ -166,7 +174,20 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
 
   useEffect(() => {
     setWelcome((club as any)?.welcome_text ?? "");
+    setMode(((club as any)?.mode as "radio" | "queue") ?? "queue");
   }, [club]);
+
+  /** Права распоряжаться комнатой: владелец в игре или модератор паблика. */
+  useEffect(() => {
+    if (!club?.id || !profile) return;
+    let cancelled = false;
+    canManageClub(club.id, profile.vk_id).then((ok) => {
+      if (!cancelled) setCanManage(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [club?.id, profile]);
 
   /** секундный тик — полоса трека и проверка конца сета */
   useEffect(() => {
@@ -176,6 +197,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
 
   /* ---------- маппинг данных в сцену ---------- */
   const djVkId = session?.dj_vk_id ?? null;
+
+  const isRadio = Boolean((session as any)?.is_radio) && !djVkId;
 
   const dj: Clubber | null = useMemo(() => {
     if (!djVkId) return null;
@@ -215,17 +238,18 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   }, [musicPosition, session, tick]);
 
   const track = useMemo(() => {
-    if (!session?.dj_vk_id) return null;
+    const s = session as any;
+    if (!s?.dj_vk_id && !s?.is_radio) return null;
     return {
-      artist: session.track_artist ?? "",
-      title: session.track_title ?? "",
+      artist: s.track_artist ?? (isRadio ? "Радио клуба" : ""),
+      title: s.track_title ?? "",
       position: shownPosition,
-      duration: (session as any).track_duration_sec ?? (session as any).track_duration ?? 0,
-      likes: session.likes ?? 0,
-      dislikes: session.dislikes ?? 0,
-      gifts: (session as any).gifts ?? 0,
+      duration: s.track_duration_sec ?? s.track_duration ?? 0,
+      likes: s.likes ?? 0,
+      dislikes: s.dislikes ?? 0,
+      gifts: s.gifts ?? 0,
     };
-  }, [session, shownPosition]);
+  }, [session, shownPosition, isRadio]);
 
   /** Поднятые руки над аватарками: ключи приводим к строкам, как ждёт сцена. */
   const uiReactions = useMemo(() => {
@@ -301,6 +325,23 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     sendReaction("up", handSkinIconUrl(profile.hand_skin) ?? null);
   }, [profile, sendReaction]);
 
+  /** Переключить режим комнаты: радио или очередь. */
+  const switchMode = useCallback(async () => {
+    if (!club || !profile) return;
+    const next = mode === "radio" ? "queue" : "radio";
+    const { data, error } = await supabase.rpc("set_club_mode", {
+      p_club: club.id,
+      p_vk_id: profile.vk_id,
+      p_mode: next,
+    });
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    setMode((data as any) ?? next);
+    useAppStore.setState({ club: { ...(club as any), mode: next } } as any);
+  }, [club, profile, mode]);
+
   /** Тумблер защиты гарема — только для автора игры. */
   const toggleHaremLock = useCallback(async () => {
     if (!profile) return;
@@ -322,7 +363,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
    */
   const djAction = useCallback(
     async (
-      action: "join" | "leave" | "advance",
+      action: "join" | "leave" | "advance" | "radio",
       track?: Record<string, unknown>,
       silent = false,
     ): Promise<any | null> => {
@@ -410,6 +451,46 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       void djAction("advance", undefined, true);
     }
   }, [tick, session, profile, djAction]);
+
+  /** Радио: трек доиграл — ставим следующий из фонотеки. */
+  useEffect(() => {
+    if (mode !== "radio" || !club) return;
+    const started = (session as any)?.track_started_at;
+    const duration = (session as any)?.track_duration_sec;
+    if (!started || !duration || session?.dj_vk_id) return;
+    if (!(session as any)?.is_radio) return;
+
+    const startedMs = Date.parse(started);
+    if (!Number.isFinite(startedMs)) return;
+
+    const key = `radio:${started}`;
+    if (advancedFor.current === key) return;
+
+    if ((Date.now() - startedMs) / 1000 >= duration + 2) {
+      advancedFor.current = key;
+      void djAction("radio", undefined, true);
+    }
+  }, [tick, mode, club, session, djAction]);
+
+  /**
+   * Радио-комната: если за пультом никого и ничего не играет,
+   * просим сервер поставить случайный трек из фонотеки клуба.
+   * Зовёт любой клиент — сервер сам отсеет лишние вызовы.
+   */
+  useEffect(() => {
+    if (mode !== "radio" || !club) return;
+    if (session?.dj_vk_id) return;
+    if ((session as any)?.track_url) return;
+    if (radioAsked.current) return;
+
+    radioAsked.current = true;
+    void djAction("radio", undefined, true).finally(() => {
+      // разрешаем следующую попытку через полминуты
+      setTimeout(() => {
+        radioAsked.current = false;
+      }, 30000);
+    });
+  }, [mode, club, session, djAction]);
 
   const sendChat = useCallback(
     async (text: string) => {
@@ -636,6 +717,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 "👍"
               )}
             </button>
+            {canManage && (
+              <button
+                className="btn-round"
+                title={mode === "radio" ? "Режим: радио" : "Режим: очередь"}
+                onClick={switchMode}
+              >
+                {mode === "radio" ? "📻" : "🎚"}
+              </button>
+            )}
             {profile.vk_id === ADMIN_VK_ID && (
               <button
                 className={"btn-round" + (haremLocked ? "" : " btn-round--off")}
@@ -663,6 +753,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       {pickerOpen && (
         <MusicPickerModal
           vkId={profile.vk_id}
+          clubId={club.id}
+          canManage={canManage}
           busy={djBusy}
           onClose={() => setPickerOpen(false)}
           onPick={pickTrack}

@@ -62,7 +62,8 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
     const player = playerRef.current!;
     let alive = true;
 
-    if (!trackUrl || !djVkId) {
+    // радио играет без живого диджея, поэтому смотрим только на ссылку
+    if (!trackUrl) {
       player.stop();
       setPlaying(false);
       setPosition(0);
@@ -79,7 +80,7 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
     return () => {
       alive = false;
     };
-  }, [trackUrl, startedAt, djVkId]);
+  }, [trackUrl, startedAt]);
 
   /* ---- подтягивание позиции: чтобы зал не расползался ---- */
   useEffect(() => {

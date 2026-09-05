@@ -46,6 +46,7 @@ export function ClubsScreen({ votes = 0, onEnter, onCreate, onHelp }: Props) {
           vkGroupId: c.vk_group_id ?? null,
           // если уже сохраняли — покажется мгновенно, без запроса к ВК
           coverUrl: c.cover_url ?? null,
+          mode: (c.mode as 'radio' | 'queue') ?? 'queue',
           online: c.online_count ?? c.members_online ?? (s?.dj_vk_id ? 1 : 0),
           ownerName: c.owner_name ?? '',
           nowPlaying: playing,

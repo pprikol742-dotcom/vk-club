@@ -4,6 +4,9 @@ import type { ClubTrack } from './music';
 export interface LibraryTrack extends ClubTrack {
   url: string;
   plays: number;
+  /** комната, которой принадлежит трек; null — общий каталог */
+  clubId?: string | null;
+  addedBy?: number | null;
 }
 
 const toTrack = (r: any): LibraryTrack => ({
@@ -13,9 +16,11 @@ const toTrack = (r: any): LibraryTrack => ({
   duration: r.duration,
   url: r.url,
   plays: r.plays ?? 0,
+  clubId: r.club_id ?? null,
+  addedBy: r.added_by_vk_id ?? null,
 });
 
-/** Поиск по общей фонотеке. Пустой запрос — самое популярное. */
+/** Поиск по общему каталогу. Пустой запрос — самое популярное. */
 export async function searchLibrary(query: string, limit = 50): Promise<LibraryTrack[]> {
   const { data, error } = await supabase.rpc('search_tracks', {
     p_query: query.trim(),
@@ -23,6 +28,76 @@ export async function searchLibrary(query: string, limit = 50): Promise<LibraryT
   });
   if (error) throw new Error(error.message);
   return (data ?? []).map(toTrack);
+}
+
+/** Фонотека конкретной комнаты. */
+export async function searchClubLibrary(
+  clubId: string,
+  query = '',
+  limit = 50,
+): Promise<LibraryTrack[]> {
+  const { data, error } = await supabase.rpc('search_club_tracks', {
+    p_club: clubId,
+    p_query: query.trim(),
+    p_limit: limit,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toTrack);
+}
+
+/** Случайный трек комнаты — им питается радио. */
+export async function randomClubTrack(clubId: string): Promise<LibraryTrack | null> {
+  const { data, error } = await supabase.rpc('random_club_track', { p_club: clubId });
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  return row ? toTrack(row) : null;
+}
+
+/**
+ * Добавить трек в фонотеку комнаты.
+ * Общий трек копируется, чтобы удаление в одной комнате
+ * не выдёргивало музыку из другой.
+ */
+export async function addTrackToClub(
+  trackId: string,
+  clubId: string,
+  vkId: number,
+): Promise<LibraryTrack> {
+  const { data, error } = await supabase.rpc('add_track_to_club', {
+    p_track_id: String(trackId),
+    p_club: clubId,
+    p_vk_id: vkId,
+  });
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  return toTrack(row);
+}
+
+/** Убрать трек из фонотеки комнаты. Только админ или модератор. */
+export async function deleteClubTrack(trackId: string, vkId: number): Promise<void> {
+  const { error } = await supabase.rpc('delete_club_track', {
+    p_track_id: String(trackId),
+    p_vk_id: vkId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** Кто может распоряжаться комнатой: владелец в игре или модератор паблика. */
+export async function canManageClub(clubId: string, vkId: number): Promise<boolean> {
+  const { data, error } = await supabase.rpc('can_manage_club', {
+    p_club: clubId,
+    p_vk_id: vkId,
+  });
+  if (error) return false;
+  return Boolean(data);
+}
+
+/** Отметить, что трек прозвучал. */
+export async function bumpPlays(trackId: string) {
+  await supabase.rpc('bump_track_plays', { p_track_id: String(trackId) }).then(
+    () => undefined,
+    () => undefined,
+  );
 }
 
 /** Последние 50 треков игрока — то, что он уже заряжал или добавил. */
@@ -68,12 +143,13 @@ export function readDuration(file: File): Promise<number> {
 
 /**
  * Заливаем файл в хранилище и заводим запись в каталоге.
- * Трек сразу попадает и в общую фонотеку, и в личный плейлист.
+ * Если передан clubId — трек сразу попадает в фонотеку этой комнаты.
  */
 export async function uploadTrack(
   vkId: number,
   file: File,
   meta: { artist: string; title: string },
+  clubId?: string | null,
 ): Promise<LibraryTrack> {
   const duration = await readDuration(file);
   const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
@@ -96,6 +172,8 @@ export async function uploadTrack(
       url: pub.publicUrl,
       storage_path: path,
       uploaded_by: vkId,
+      club_id: clubId ?? null,
+      added_by_vk_id: vkId,
     })
     .select()
     .single();
