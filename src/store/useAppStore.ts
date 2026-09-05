@@ -17,6 +17,7 @@ interface AppState {
   setProfile: (p: Profile | null) => void;
   setClub: (c: Club | null) => void;
   setSession: (s: ClubSession | null) => void;
+  setChatMessages: (m: ChatMessage[]) => void;
   addChatMessage: (m: ChatMessage) => void;
   setLightShow: (vkId: number, on: boolean) => void;
   triggerResonance: () => void;
@@ -37,8 +38,23 @@ export const useAppStore = create<AppState>((set) => ({
   activeGifts: [],
 
   setProfile: (profile) => set({ profile }),
-  setClub: (club) => set({ club }),
+
+  /**
+   * Смена клуба обнуляет всё, что относилось к прежнему залу.
+   * Без этого трек и диджей из старого клуба протекали в новый.
+   */
+  setClub: (club) =>
+    set({
+      club,
+      session: null,
+      chatMessages: [],
+      activeGifts: [],
+      lightShowByVkId: {},
+      resonanceActive: false,
+    }),
+
   setSession: (session) => set({ session }),
+  setChatMessages: (chatMessages) => set({ chatMessages: chatMessages.slice(-200) }),
   addChatMessage: (m) =>
     set((s) => ({ chatMessages: [...s.chatMessages.slice(-199), m] })),
   setLightShow: (vkId, on) =>
@@ -59,4 +75,3 @@ export const useAppStore = create<AppState>((set) => ({
   removeActiveGift: (id) =>
     set((s) => ({ activeGifts: s.activeGifts.filter((x) => x.id !== id) })),
 }));
-

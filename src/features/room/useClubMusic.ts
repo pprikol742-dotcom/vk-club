@@ -11,6 +11,9 @@ import { useUi } from '../../store/uiStore';
 /** Резервный каталог: заливается в Supabase Storage, если аудио ВК не дадут. */
 const FALLBACK_CATALOG: ClubTrack[] = [];
 
+/** Как часто подтягиваем позицию к серверной. */
+const RESYNC_MS = 10_000;
+
 type Session = {
   track_url?: string | null;
   track_started_at?: string | null;
@@ -19,28 +22,25 @@ type Session = {
 } | null;
 
 /**
- * Звук слышит только тот, кто стоит за пультом, и только после
- * нажатия «Зарядить». Слушатели видят трек в плеере, но молчат.
+ * Трек слышат все в зале, синхронно: позиция считается от момента
+ * старта на сервере, поэтому зашедший в середине песни попадает в середину.
  *
- * Сам по себе хук музыку не включает никогда: он умеет только глушить.
- * Запуск — исключительно через loadTrack() из обработчика нажатия.
+ * Включить может только диджей — через выбор трека. Остальные просто
+ * подхватывают то, что уже играет.
+ *
+ * Браузер не даёт звук до первого касания экрана. Касание ловится в
+ * ClubRoom и зовёт unlock(); если звук всё же не пустили, поднимается
+ * флаг needsGesture и в панели появляется кнопка «Включить звук».
  */
 export function useClubMusic(appId: number, session: Session, myVkId?: number | null) {
   const muted = useUi((s) => s.muted);
   const playerRef = useRef<ClubPlayer | null>(null);
   const [position, setPosition] = useState(0);
-  const [armed, setArmed] = useState(false);
-
-  /**
-   * Окно тишины после ручного запуска. Сразу после «Зарядить» сессия
-   * ещё не успела прийти по realtime, и без этой паузы наш же эффект
-   * глушил бы только что включённый трек.
-   */
-  const graceUntil = useRef(0);
+  const [playing, setPlaying] = useState(false);
+  const [needsGesture, setNeedsGesture] = useState(false);
 
   if (!playerRef.current) playerRef.current = new ClubPlayer();
 
-  /** Основной источник — аудио ВК, запасной — свои файлы. */
   const source: MusicSource = useMemo(
     () => (FALLBACK_CATALOG.length ? directMusicSource(FALLBACK_CATALOG) : vkMusicSource(appId)),
     [appId],
@@ -50,82 +50,97 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
   const trackUrl = session?.track_url ?? null;
   const startedAt = session?.track_started_at ?? null;
 
-  /** Я за пультом? Только при этом звук вообще возможен. */
+  /** Я за пультом — нужно только для кнопки «Завершить сет». */
   const atBooth = myVkId != null && djVkId != null && djVkId === myVkId;
 
   useEffect(() => {
     playerRef.current?.setMuted(muted);
   }, [muted]);
 
-  /* ---- глушение: ушёл с пульта, перекупили, трек сняли ---- */
+  /* ---- главное: что стоит в сессии, то и играет ---- */
   useEffect(() => {
     const player = playerRef.current!;
-    if (Date.now() < graceUntil.current) return;
-    if (!atBooth || !trackUrl) {
-      player.stop();
-      setArmed(false);
-      setPosition(0);
-    }
-  }, [atBooth, trackUrl]);
+    let alive = true;
 
-  /* ---- смена трека, пока пульт заряжен ---- */
+    if (!trackUrl || !djVkId) {
+      player.stop();
+      setPlaying(false);
+      setPosition(0);
+      setNeedsGesture(false);
+      return;
+    }
+
+    void player.start(trackUrl, startedAt).then((ok) => {
+      if (!alive) return;
+      setPlaying(ok);
+      setNeedsGesture(!ok);
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [trackUrl, startedAt, djVkId]);
+
+  /* ---- подтягивание позиции: чтобы зал не расползался ---- */
   useEffect(() => {
+    if (!playing || !trackUrl) return;
     const player = playerRef.current!;
-    if (!atBooth || !trackUrl || !player.armed) return;
-    void player.start(trackUrl, startedAt);
-  }, [trackUrl]);
+    const timer = setInterval(() => {
+      void player.start(trackUrl, startedAt);
+    }, RESYNC_MS);
+    return () => clearInterval(timer);
+  }, [playing, trackUrl, startedAt]);
 
   /* ---- живая позиция для полосы ---- */
   useEffect(() => {
-    const player = playerRef.current!;
-    if (!armed) {
+    if (!playing) {
       setPosition(0);
       return;
     }
+    const player = playerRef.current!;
     const timer = setInterval(() => setPosition(player.position), 500);
     return () => clearInterval(timer);
-  }, [armed]);
+  }, [playing]);
 
-  /* ---- размонтирование ---- */
+  /* ---- ушли из зала ---- */
   useEffect(() => () => playerRef.current?.stop(), []);
 
   /**
-   * Кнопка «Зарядить». Вешать прямо на onClick.
-   * force — когда сервер уже подтвердил, что мы за пультом,
-   * а сессия по realtime ещё не дошла.
-   */
-  const loadTrack = useCallback(
-    async (url?: string | null, at?: string | number | null, force = false) => {
-      const player = playerRef.current!;
-      if (!atBooth && !force) return false;
-
-      const src = url ?? trackUrl;
-      if (!src) return false;
-
-      graceUntil.current = Date.now() + 8000;
-      const ok = await player.start(src, at ?? startedAt);
-      setArmed(ok);
-      if (!ok) graceUntil.current = 0;
-      return ok;
-    },
-    [atBooth, trackUrl, startedAt],
-  );
-
-  /** Снять трек с пульта вручную. */
-  const stop = useCallback(() => {
-    graceUntil.current = 0;
-    playerRef.current?.stop();
-    setArmed(false);
-    setPosition(0);
-  }, []);
-
-  /**
-   * Разблокировка звука по касанию экрана.
-   * Ничего не проигрывает — только берёт у браузера разрешение заранее,
-   * чтобы «Зарядить» сработало с первого нажатия.
+   * Разблокировка по касанию экрана. Ничего не проигрывает сама,
+   * только берёт у браузера разрешение заранее.
    */
   const unlock = useCallback(() => {
     playerRef.current?.unlock();
+  }, []);
+
+  /** Кнопка «Включить звук» — если автозапуск не прошёл. */
+  const enableSound = useCallback(async () => {
+    const player = playerRef.current!;
+    if (!trackUrl) return false;
+    const ok = await player.start(trackUrl, startedAt);
+    setPlaying(ok);
+    setNeedsGesture(!ok);
+    return ok;
+  }, [trackUrl, startedAt]);
+
+  /**
+   * Явный запуск трека сразу после того, как сервер подтвердил,
+   * что мы встали за пульт, — сессия по realtime ещё не дошла.
+   */
+  const loadTrack = useCallback(async (url?: string | null, at?: string | number | null) => {
+    const player = playerRef.current!;
+    const src = url ?? trackUrl;
+    if (!src) return false;
+    const ok = await player.start(src, at ?? startedAt);
+    setPlaying(ok);
+    setNeedsGesture(!ok);
+    return ok;
+  }, [trackUrl, startedAt]);
+
+  const stop = useCallback(() => {
+    playerRef.current?.stop();
+    setPlaying(false);
+    setPosition(0);
   }, []);
 
   return {
@@ -134,7 +149,9 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
     unlock,
     player: playerRef.current!,
     atBooth,
-    armed,
+    playing,
+    needsGesture,
+    enableSound,
     loadTrack,
     stop,
   };

@@ -55,6 +55,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const profile = useAppStore((s) => s.profile);
   const club = useAppStore((s) => s.club);
   const session = useAppStore((s) => s.session);
+  const setSession = useAppStore((s) => s.setSession);
+  const setChatMessages = useAppStore((s) => s.setChatMessages);
   const chatMessages = useAppStore((s) => s.chatMessages);
   const resonanceActive = useAppStore((s) => s.resonanceActive);
   const addCoins = useAppStore((s) => s.addCoins);
@@ -100,9 +102,41 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     position: musicPosition,
     unlock: unlockAudio,
     atBooth,
+    needsGesture,
+    enableSound,
     loadTrack,
     stop: stopMusic,
   } = useClubMusic(APP_ID, session as any, profile?.vk_id ?? null);
+
+  /**
+   * Что играет прямо сейчас — читаем при входе.
+   * Realtime приносит только изменения, поэтому зашедший в середине
+   * сета без этого видел бы пустой пульт.
+   */
+  useEffect(() => {
+    if (!club?.id) return;
+    let cancelled = false;
+
+    (async () => {
+      const [sessionRes, chatRes] = await Promise.all([
+        supabase.from("club_sessions").select("*").eq("club_id", club.id).maybeSingle(),
+        supabase
+          .from("chat_messages")
+          .select("*")
+          .eq("club_id", club.id)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ]);
+
+      if (cancelled) return;
+      if (sessionRes.data) setSession(sessionRes.data as any);
+      if (chatRes.data) setChatMessages([...(chatRes.data as any[])].reverse());
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [club?.id, setSession, setChatMessages]);
 
   /* ---------- бан и приветствие ---------- */
   useEffect(() => {
@@ -164,10 +198,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     [occupants, djVkId],
   );
 
-  /**
-   * Полоса трека. За пультом берём настоящее время звука,
-   * остальным считаем от старта на сервере — видят, но не слышат.
-   */
+  /** Полоса трека: живое время звука, а если он молчит — счёт от старта. */
   const shownPosition = useMemo(() => {
     if (musicPosition > 0) return musicPosition;
     const started = (session as any)?.track_started_at;
@@ -266,11 +297,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       if (!res) return;
 
       setPickerOpen(false);
-
-      if (res.playing && t.url) {
-        const ok = await loadTrack(t.url, new Date().toISOString(), true);
-        if (!ok) alert("Браузер не пустил звук — нажми «Зарядить» ещё раз");
-      }
+      if (res.playing && t.url) void loadTrack(t.url, new Date().toISOString());
     },
     [djAction, loadTrack],
   );
@@ -317,14 +344,12 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
 
     const elapsed = (Date.now() - startedMs) / 1000;
     const mine = currentDj === profile.vk_id;
-    const threshold = duration + (mine ? 1 : 15);
 
-    if (elapsed >= threshold) {
+    if (elapsed >= duration + (mine ? 1 : 15)) {
       advancedFor.current = key;
-      if (mine) stopMusic();
       void djAction("advance", undefined, true);
     }
-  }, [tick, session, profile, djAction, stopMusic]);
+  }, [tick, session, profile, djAction]);
 
   const sendChat = useCallback(
     async (text: string) => {
@@ -494,6 +519,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         onChooseAnotherClub={exitClub}
         extraButtons={
           <>
+            {needsGesture && (
+              <button
+                className="btn-round btn-round--charge"
+                title="Включить звук"
+                onClick={() => void enableSound()}
+              >
+                🔈
+              </button>
+            )}
             <button
               className={"btn-round" + (myLightOn ? "" : " btn-round--off")}
               title="Светомузыка"
