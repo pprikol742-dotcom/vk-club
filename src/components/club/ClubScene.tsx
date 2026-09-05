@@ -33,6 +33,8 @@ interface Props {
   videoOffset?: number;
   /** поднятые руки: ключ — id клаббера */
   reactions?: Record<string, { kind: 'up' | 'down'; skin: string | null }>;
+  /** кто танцует под текущий трек */
+  dancers?: Set<string>;
   decor?: string | null;
   onExit: () => void;
   onBecomeDj: () => void;
@@ -162,7 +164,7 @@ export const ClubScene: React.FC<Props> = (p) => {
           <div
             className={
               'dj-slot' +
-              (p.reactions?.[p.dj.id]?.kind === 'up' ? ' is-dancing' : '')
+              (p.dancers?.has(p.dj.id) ? ' is-dancing' : '')
             }
             style={tuned('djSlot', tweak)}
             onClick={() => p.onOpenProfile(p.dj!.id)}
@@ -227,6 +229,7 @@ export const ClubScene: React.FC<Props> = (p) => {
               delay={(index % 5) * 0.18}
               isSelf={c.id === p.myId}
               reaction={p.reactions?.[c.id] ?? null}
+              dancing={p.dancers?.has(c.id) ?? false}
               onOpenProfile={p.onOpenProfile}
               onGift={p.onGiftUser}
             />

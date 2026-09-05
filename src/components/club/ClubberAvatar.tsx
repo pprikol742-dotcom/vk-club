@@ -19,8 +19,10 @@ export interface Clubber {
 
 interface Props {
   clubber: Clubber;
-  /** поднятая рука: лайк или дизлайк */
+  /** поднятая рука: лайк или дизлайк, живёт пару секунд */
   reaction?: { kind: 'up' | 'down'; skin: string | null } | null;
+  /** танцует до конца текущего трека — ставится лайком */
+  dancing?: boolean;
   x: number;
   y: number;
   delay?: number;
@@ -31,7 +33,7 @@ interface Props {
 }
 
 export const ClubberAvatar: React.FC<Props> = ({
-  clubber, x, y, delay = 0, isSelf, reaction, onOpenProfile, onGift,
+  clubber, x, y, delay = 0, isSelf, reaction, dancing, onOpenProfile, onGift,
 }) => {
   // на десктопе — ховер, на телефоне — тап по аватарке раскрывает иконки
   const [open, setOpen] = useState(false);
@@ -48,7 +50,7 @@ export const ClubberAvatar: React.FC<Props> = ({
       className={
         'clubber-slot' +
         (open ? ' is-open' : '') +
-        (reaction?.kind === 'up' ? ' is-dancing' : '')
+        (dancing ? ' is-dancing' : '')
       }
       style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${delay}s` }}
       title={hint}

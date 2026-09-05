@@ -76,6 +76,10 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
   const [tick, setTick] = useState(0);
+  /** кто танцует под текущий трек: лайкнул — танцует до конца */
+  const [dancers, setDancers] = useState<Set<string>>(new Set());
+  /** мой голос за текущий трек, чтобы кнопки залипали */
+  const [myVote, setMyVote] = useState<"up" | "down" | null>(null);
   const [canManage, setCanManage] = useState(false);
   const [mode, setMode] = useState<"radio" | "queue">(
     ((useAppStore.getState().club as any)?.mode as "radio" | "queue") ?? "queue",
@@ -189,6 +193,27 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     };
   }, [club?.id, profile]);
 
+  /** Новый трек — танцпол замирает, голосовать можно заново. */
+  useEffect(() => {
+    setDancers(new Set());
+    setMyVote(null);
+  }, [(session as any)?.track_started_at]);
+
+  /** Лайкнул — танцует до конца трека. Рука гаснет, танец остаётся. */
+  useEffect(() => {
+    const ups = Object.entries(reactions ?? {})
+      .filter(([, r]) => r.kind === "up")
+      .map(([vkId]) => String(vkId));
+    if (!ups.length) return;
+
+    setDancers((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      for (const id of ups) if (!next.has(id)) { next.add(id); changed = true; }
+      return changed ? next : prev;
+    });
+  }, [reactions]);
+
   /** секундный тик — полоса трека и проверка конца сета */
   useEffect(() => {
     const t = setInterval(() => setTick((v) => v + 1), 1000);
@@ -248,8 +273,9 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       likes: s.likes ?? 0,
       dislikes: s.dislikes ?? 0,
       gifts: s.gifts ?? 0,
+      myVote,
     };
-  }, [session, shownPosition, isRadio]);
+  }, [session, shownPosition, isRadio, myVote]);
 
   /** Поднятые руки над аватарками: ключи приводим к строкам, как ждёт сцена. */
   const uiReactions = useMemo(() => {
@@ -308,8 +334,12 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         alert(error.message);
         return;
       }
-      // поднимаем руку всем в зале
+      setMyVote(v);
+      // поднимаем руку всем в зале; танец включится от неё же
       sendReaction(v, handSkinIconUrl(profile.hand_skin) ?? null);
+      if (v === "up") {
+        setDancers((prev) => new Set(prev).add(String(profile.vk_id)));
+      }
 
       const row: any = Array.isArray(data) ? data[0] : data;
       if (row && session) {
@@ -662,6 +692,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         votes={(profile as any).votes ?? 0}
         track={track}
         reactions={uiReactions}
+        dancers={dancers}
         dj={dj}
         crowd={crowd}
         queuePosition={(session as any)?.my_queue_position ?? null}

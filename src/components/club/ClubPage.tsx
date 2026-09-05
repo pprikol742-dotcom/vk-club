@@ -45,6 +45,8 @@ interface Props {
   videoUrl?: string | null;
   videoOffset?: number;
   reactions?: Record<string, { kind: 'up' | 'down'; skin: string | null }>;
+  /** кто танцует под текущий трек */
+  dancers?: Set<string>;
   /** плюсик в плеере — добавить трек к себе */
   onAddTrack?: () => void;
   decor?: string | null;
@@ -141,6 +143,7 @@ export const ClubPage: React.FC<Props> = (p) => {
           videoUrl={p.videoUrl}
           videoOffset={p.videoOffset}
           reactions={p.reactions}
+          dancers={p.dancers}
           decor={p.decor}
           onExit={p.onExit}
           onBecomeDj={p.onBecomeDj}
