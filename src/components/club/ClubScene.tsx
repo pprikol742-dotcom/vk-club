@@ -45,6 +45,7 @@ interface Props {
   onAddTrack?: () => void;
   onGiftUser: (userId: string) => void;
   onQueue: () => void;
+  onLeaveQueue?: () => void;
   onCoins: () => void;
   onTop: () => void;
   onHelp: () => void;
@@ -138,6 +139,7 @@ export const ClubScene: React.FC<Props> = (p) => {
           isDj={meIsDj}
           onBecomeDj={p.onBecomeDj}
           onQueue={p.onQueue}
+          onLeaveQueue={p.onLeaveQueue}
         />
 
         {p.videoUrl && p.dj && (

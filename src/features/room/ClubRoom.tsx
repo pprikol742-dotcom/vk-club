@@ -76,6 +76,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
   const [tick, setTick] = useState(0);
+  /** моё место в очереди диджеев, null — не в очереди */
+  const [queuePos, setQueuePos] = useState<number | null>(null);
   /** кто танцует под текущий трек: лайкнул — танцует до конца */
   const [dancers, setDancers] = useState<Set<string>>(new Set());
   /** мой голос за текущий трек, чтобы кнопки залипали */
@@ -193,6 +195,24 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       cancelled = true;
     };
   }, [club?.id, profile]);
+
+  /** Моё место в очереди: перечитываем при смене трека и раз в пять секунд. */
+  useEffect(() => {
+    if (!club?.id || !profile) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("dj_queue")
+        .select("position")
+        .eq("club_id", club.id)
+        .eq("vk_id", profile.vk_id)
+        .maybeSingle();
+      if (!cancelled) setQueuePos((data as any)?.position ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [club?.id, profile, (session as any)?.track_started_at, Math.floor(tick / 5)]);
 
   /** Ключ текущего трека — по нему отсекаем руки с прошлого. */
   const trackKey: string | null = (session as any)?.track_started_at ?? null;
@@ -430,6 +450,12 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     },
     [club],
   );
+
+  /** Покинуть очередь. */
+  const leaveQueue = useCallback(async () => {
+    const ok = await djAction("leave", undefined, true);
+    if (ok) setQueuePos(null);
+  }, [djAction]);
 
   /** Выбрали трек: встаём за пульт и сразу включаем звук — жест ещё живой. */
   const pickTrack = useCallback(
@@ -748,7 +774,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         dancers={dancers}
         dj={dj}
         crowd={crowd}
-        queuePosition={(session as any)?.my_queue_position ?? null}
+        queuePosition={queuePos}
+        onLeaveQueue={leaveQueue}
         queueMinutes={15}
         messages={messages}
         appUrl={APP_URL}

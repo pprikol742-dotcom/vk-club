@@ -18,6 +18,7 @@ import '../../styles/club-extra.css';
 import '../../styles/club-frames.css';
 import '../../styles/club-fx.css';
 import '../../styles/club-mode.css';
+import '../../styles/club-queue.css';
 
 interface Props {
   roomId: RoomId;
@@ -61,6 +62,7 @@ interface Props {
   /** подарок: userId === null — угощение диджею */
   onSendGift: (g: GiftItem, userId: string | null) => void;
   onSkipQueue: () => void;
+  onLeaveQueue?: () => void;
   onSendMessage: (text: string) => void;
   onClap: () => void;
   onDecorate: () => void;
@@ -156,7 +158,8 @@ export const ClubPage: React.FC<Props> = (p) => {
             const c = p.crowd.find((x) => x.id === id);
             setGiftTarget({ id, name: c?.name });
           }}
-          onQueue={() => open('queue')}
+          onLeaveQueue={p.onLeaveQueue}
+        onQueue={() => open('queue')}
           onCoins={p.onOpenShop}
           onTop={p.onOpenTop}
           onHelp={() => open('help')}

@@ -25,6 +25,8 @@ interface Props {
   onAdd?: () => void;
   onBecomeDj: () => void;
   onQueue: () => void;
+  /** покинуть очередь диджеев */
+  onLeaveQueue?: () => void;
 }
 
 const mmss = (sec: number) => {
@@ -33,7 +35,7 @@ const mmss = (sec: number) => {
 };
 
 export const TrackPlayer: React.FC<Props> = ({
-  track, style, queuePosition, isDj, onVote, onGift, onAdd, onBecomeDj, onQueue,
+  track, style, queuePosition, isDj, onVote, onGift, onAdd, onBecomeDj, onQueue, onLeaveQueue,
 }) => {
   const [added, setAdded] = React.useState(false);
   React.useEffect(() => { setAdded(false); }, [track?.artist, track?.title]);
@@ -44,7 +46,17 @@ export const TrackPlayer: React.FC<Props> = ({
   return (
     <div className={'player' + (empty ? ' player--empty' : '')} style={style}>
       <div className="player__top">
-        <span className="player__note">♪</span>
+        {queuePosition !== null && !isDj ? (
+          <button
+            className="player__leave"
+            title="Покинуть очередь"
+            onClick={onLeaveQueue}
+          >
+            ✕<span>из очереди</span>
+          </button>
+        ) : (
+          <span className="player__note">♪</span>
+        )}
 
         <div className="player__meta">
           <div className="player__title">{track?.title ?? 'Пульт свободен'}</div>
@@ -90,8 +102,13 @@ export const TrackPlayer: React.FC<Props> = ({
               Стать<br />DJ
             </button>
           ) : (
-            <button className="player__dj player__dj--queue" title="Твоя очередь" onClick={onQueue}>
-              Ты {queuePosition}
+            <button
+              className="player__dj player__dj--queue"
+              title={`Ты ${queuePosition}-й в очереди. Нажми, чтобы сменить трек`}
+              onClick={onQueue}
+            >
+              <b>{queuePosition}</b>
+              <span>в очереди</span>
             </button>
           )}
         </div>

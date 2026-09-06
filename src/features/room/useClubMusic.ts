@@ -66,13 +66,25 @@ export function useClubMusic(appId: number, session: Session, myVkId?: number | 
     const player = playerRef.current!;
     let alive = true;
 
-    // радио играет без живого диджея, поэтому смотрим только на ссылку
+    /**
+     * Пустая сессия не глушит звук сразу. При смене диджея сервер
+     * сначала обнуляет трек и только потом ставит новый — если
+     * реагировать мгновенно, ссылка снимается и трек начинается
+     * заново. Ждём полторы секунды: придёт новый трек — переключимся
+     * без паузы, не придёт — тогда и замолчим.
+     */
     if (!trackUrl) {
-      player.stop();
-      setPlaying(false);
-      setPosition(0);
-      setNeedsGesture(false);
-      return;
+      const t = setTimeout(() => {
+        if (!alive) return;
+        player.stop();
+        setPlaying(false);
+        setPosition(0);
+        setNeedsGesture(false);
+      }, 1500);
+      return () => {
+        alive = false;
+        clearTimeout(t);
+      };
     }
 
     void player.start(trackUrl, startedAt).then((ok) => {
