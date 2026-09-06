@@ -1,5 +1,5 @@
 import React from 'react';
-import { ROOMS, LAYOUT, assignSlots, type RoomId } from '../../config/clubTheme';
+import { ROOMS, layoutFor, assignSlots, type RoomId } from '../../config/clubTheme';
 import { useUi } from '../../store/uiStore';
 import { TrackPlayer, type TrackState } from './TrackPlayer';
 import { ClubberAvatar, type Clubber } from './ClubberAvatar';
@@ -61,6 +61,8 @@ interface Props {
 
 export const ClubScene: React.FC<Props> = (p) => {
   const room = ROOMS[p.roomId];
+  // раскладка своя у каждого стиля зала
+  const LAYOUT = layoutFor(p.roomId);
   const { muted, toggleMute, fx, toggleFxMenu, tweak, avatarSize } = useUi();
   const meIsDj = !!p.dj && p.dj.id === p.myId;
 

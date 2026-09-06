@@ -1,6 +1,24 @@
 // Темы клубов и раскладка под фон public/assets/bg/club_background.png (807×398).
 
-export type RoomId = 'neon' | 'disco8090' | 'dance' | 'ivetta';
+export type RoomId = 'neon' | 'disco8090' | 'dance' | 'ivetta' | 'dark';
+
+/** Стиль зала, который выбирают при создании клуба. */
+export type ClubStyle = 'candy' | 'dark';
+
+export const STYLE_TO_ROOM: Record<ClubStyle, RoomId> = {
+  candy: 'neon',
+  dark: 'dark',
+};
+
+export const STYLE_LABELS: Record<ClubStyle, string> = {
+  candy: 'Кэнди',
+  dark: 'Дарк',
+};
+
+export const STYLE_HINTS: Record<ClubStyle, string> = {
+  candy: 'Ультрафиолет, розовый неон, светлый танцпол. Праздничный и яркий.',
+  dark: 'Синий полумрак, кирпич, холодный свет. Серьёзный андеграунд.',
+};
 
 export interface RoomTheme {
   id: RoomId;
@@ -16,12 +34,14 @@ export interface RoomTheme {
 
 // На GitHub Pages сайт живёт в подпапке /vk-club/, поэтому путь строим от BASE_URL.
 const BG = `${import.meta.env.BASE_URL}assets/bg/club_background.png`;
+const BG_DARK = `${import.meta.env.BASE_URL}assets/bg/club_background_dark.png`;
 
 export const ROOMS: Record<RoomId, RoomTheme> = {
   neon:      { id: 'neon',      title: 'В Клубе',            background: BG, neon: '#c14bff', neonSoft: 'rgba(193,75,255,.45)', signColor: '#ff3ec8', signGlow: 'rgba(255,62,200,.85)' },
   disco8090: { id: 'disco8090', title: 'ДИСКО ХИТЫ 80-90',   background: BG, neon: '#b04cff', neonSoft: 'rgba(176,76,255,.45)', signColor: '#ff6ad5', signGlow: 'rgba(255,106,213,.8)' },
   dance:     { id: 'dance',     title: 'Dance Music Only',   background: BG, neon: '#00d8ff', neonSoft: 'rgba(0,216,255,.40)',  signColor: '#4de2ff', signGlow: 'rgba(77,226,255,.8)' },
   ivetta:    { id: 'ivetta',    title: 'Ivetta Club',        background: BG, neon: '#ff4bd8', neonSoft: 'rgba(255,75,216,.45)', signColor: '#ff8ae0', signGlow: 'rgba(255,138,224,.8)' },
+  dark:      { id: 'dark',      title: 'Player Club',        background: BG_DARK, neon: '#3aa6ff', neonSoft: 'rgba(58,166,255,.40)', signColor: '#7cc6ff', signGlow: 'rgba(124,198,255,.85)' },
 };
 
 /** Всё в процентах от сцены — раскладка едет вместе с фоном на любом экране. */
@@ -76,6 +96,23 @@ export function assignSlots<T extends { id: string }>(people: T[]) {
 
     return { person: p, slot: CROWD_SLOTS[slot], index: slot };
   });
+}
+
+/**
+ * Поправки под тёмный зал: там вывеска висит ниже, а пульт стоит выше.
+ * Всё остальное совпало с кэнди — лампы и колонки на тех же местах.
+ */
+const DARK_TWEAKS = {
+  sign:       { left: '50%',   top: '27%',   width: '27%' },
+  discoBall:  { left: '50%',   top: '4%' },
+  djSlot:     { left: '50%',   top: '38%' },
+  videoScreen:{ left: '50%',   top: '24%',   width: '30%' },
+  giftSpot:   { left: '30%',   top: '64%' },
+};
+
+/** Раскладка под конкретный зал. */
+export function layoutFor(room: RoomId): typeof LAYOUT {
+  return (room === 'dark' ? { ...LAYOUT, ...DARK_TWEAKS } : LAYOUT) as typeof LAYOUT;
 }
 
 /** Ключи, которые можно двигать в режиме настройки раскладки. */

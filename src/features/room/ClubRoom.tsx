@@ -19,6 +19,7 @@ import type { GiftItem } from "../../components/modals/ClubModals";
 import type { ClubberProfile } from "../../components/modals/ProfileModal";
 import type { ClubTrack } from "../../lib/music";
 import { genderFromVk, type ClubRole } from "../../config/frames";
+import { STYLE_TO_ROOM, type ClubStyle } from "../../config/clubTheme";
 import { useClubMusic } from "./useClubMusic";
 
 const APP_URL = "https://vk.com/app54746228";
@@ -779,7 +780,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   return (
     <div onPointerDown={unlockAudio}>
       <ClubPage
-        roomId="neon"
+        roomId={STYLE_TO_ROOM[(((club as any).style as ClubStyle) ?? "candy")] ?? "neon"}
         clubId={club.id}
         clubName={club.name}
         signText={(club as any).group_name ?? club.name}
