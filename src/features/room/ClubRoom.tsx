@@ -214,6 +214,21 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
     };
   }, [club?.id, profile, (session as any)?.track_started_at, Math.floor(tick / 5)]);
 
+  /**
+   * Пока стоишь за пультом — отмечаешься на сервере.
+   * Перестал отмечаться, значит вкладка закрыта, и зал снимет тебя сам.
+   */
+  useEffect(() => {
+    if (!atBooth || !club?.id || !profile) return;
+
+    const beat = () => {
+      void supabase.rpc("dj_heartbeat", { p_club: club.id, p_vk_id: profile.vk_id });
+    };
+    beat();
+    const timer = setInterval(beat, 10000);
+    return () => clearInterval(timer);
+  }, [atBooth, club?.id, profile]);
+
   /** Ключ текущего трека — по нему отсекаем руки с прошлого. */
   const trackKey: string | null = (session as any)?.track_started_at ?? null;
 
@@ -728,10 +743,17 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const ghostSince = useRef<number | null>(null);
   useEffect(() => {
     const currentDj = session?.dj_vk_id;
-    if (!currentDj || !club || !occupants.length) {
+    if (!currentDj || !club || !profile) {
       ghostSince.current = null;
       return;
     }
+    // сам себя призраком не считаю
+    if (currentDj === profile.vk_id) {
+      ghostSince.current = null;
+      return;
+    }
+    // список присутствующих ещё не пришёл — не спешим
+    if (!occupants.length) return;
     const present = occupants.some((o) => o.vkId === currentDj);
     if (present) {
       ghostSince.current = null;
@@ -741,11 +763,11 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       ghostSince.current = Date.now();
       return;
     }
-    if (Date.now() - ghostSince.current >= 20000) {
+    if (Date.now() - ghostSince.current >= 25000) {
       ghostSince.current = null;
       void djAction("advance", undefined, true);
     }
-  }, [tick, session, occupants, club, djAction]);
+  }, [tick, session, occupants, club, profile, djAction]);
 
   /** Светомузыка у всех включена всегда — отдельной кнопки больше нет. */
   useEffect(() => {

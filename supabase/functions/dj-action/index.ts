@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
     if (body.action === "advance") {
       const { data: session } = await supabase
         .from("club_sessions")
-        .select("dj_vk_id, track_started_at, track_duration_sec")
+        .select("dj_vk_id, track_started_at, track_duration_sec, dj_seen_at")
         .eq("club_id", body.club_id)
         .maybeSingle();
 
@@ -216,7 +216,15 @@ Deno.serve(async (req) => {
         !Number.isFinite(startedMs) ||
         Date.now() - startedMs >= (((session?.track_duration_sec as number) ?? 0) + 5) * 1000;
 
-      if (session?.dj_vk_id && session.dj_vk_id !== vkUserId && !finished) {
+      /**
+       * Диджей отмечается каждые десять секунд. Молчит больше тридцати —
+       * значит закрыл вкладку, и зал вправе снять его с пульта.
+       * Без этого «призрак» висел бы за вертушками до конца трека.
+       */
+      const seenMs = session?.dj_seen_at ? Date.parse(session.dj_seen_at as string) : NaN;
+      const abandoned = !Number.isFinite(seenMs) || Date.now() - seenMs > 30_000;
+
+      if (session?.dj_vk_id && session.dj_vk_id !== vkUserId && !finished && !abandoned) {
         throw new Error("Только текущий DJ может завершить сет");
       }
 
