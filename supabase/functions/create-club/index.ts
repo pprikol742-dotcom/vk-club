@@ -32,6 +32,8 @@ Deno.serve(async (req) => {
     const body = await req.json() as {
       launchParams: VkLaunchParams;
       vk_group_id: number;
+      /** стиль зала: candy или dark */
+      style?: string;
     };
 
     const vkUserId = await verifyVkLaunchParams(
@@ -53,6 +55,8 @@ Deno.serve(async (req) => {
         vk_group_id: body.vk_group_id,
         name: groupName,
         owner_vk_id: vkUserId,
+        // стиль зала выбирают при создании: candy или dark
+        style: body.style === "dark" ? "dark" : "candy",
         is_featured: FEATURED_GROUP_IDS.has(body.vk_group_id),
       })
       .select()

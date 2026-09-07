@@ -103,11 +103,13 @@ export function assignSlots<T extends { id: string }>(people: T[]) {
  * Всё остальное совпало с кэнди — лампы и колонки на тех же местах.
  */
 const DARK_TWEAKS = {
-  sign:       { left: '53%',   top: '38.5%', width: '25%' },
+  sign:       { left: '50%',   top: '24.5%', width: '36%' },
   discoBall:  { left: '50%',   top: '4%' },
-  djSlot:     { left: '50%',   top: '40%' },
-  videoScreen:{ left: '53%',   top: '35%',   width: '28%' },
-  giftSpot:   { left: '30%',   top: '64%' },
+  djSlot:     { left: '50%',   top: '41.5%' },
+  djButton:   { left: '52%',   top: '97.5%' },
+  danceFloor: { left: '2%',    top: '70%',   width: '96%', height: '28%' },
+  giftSpot:   { left: '33%',   top: '66%' },
+  videoScreen:{ left: '50.5%', top: '17%',   width: '46%' },
 };
 
 /** Раскладка под конкретный зал. */

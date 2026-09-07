@@ -2,6 +2,13 @@ import { useEffect, useState } from "react";
 import { getAdminGroups, getLaunchParams } from "../../lib/vkBridge";
 import { callEdgeFunction } from "../../lib/supabase";
 import type { Club } from "../../lib/types";
+import { STYLE_LABELS, STYLE_HINTS, type ClubStyle } from "../../config/clubTheme";
+import "../../styles/club-create.css";
+
+const STYLE_PREVIEW: Record<ClubStyle, string> = {
+  candy: `${import.meta.env.BASE_URL}assets/bg/club_background.png`,
+  dark: `${import.meta.env.BASE_URL}assets/bg/club_background_dark.png`,
+};
 
 interface VkGroup {
   id: number;
@@ -15,6 +22,7 @@ export function ClubCreate({ onClubReady }: { onClubReady: (club: Club) => void 
   const [loading, setLoading] = useState(true);
   const [creatingId, setCreatingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [style, setStyle] = useState<ClubStyle>("candy");
 
   useEffect(() => {
     getAdminGroups()
@@ -34,6 +42,7 @@ export function ClubCreate({ onClubReady }: { onClubReady: (club: Club) => void 
         launchParams: getLaunchParams(),
         vk_group_id: groupId,
         vk_user_access_token: userToken,
+        style,
       });
       onClubReady(club);
     } catch (e) {
@@ -51,6 +60,24 @@ export function ClubCreate({ onClubReady }: { onClubReady: (club: Club) => void 
       </p>
 
       {loading && <p>Загружаю твои сообщества…</p>}
+      <div className="style-pick">
+        <div className="style-pick__title">Стиль зала</div>
+        <div className="style-pick__row">
+          {(Object.keys(STYLE_PREVIEW) as ClubStyle[]).map((id) => (
+            <button
+              key={id}
+              className={"style-card" + (style === id ? " is-active" : "")}
+              onClick={() => setStyle(id)}
+              type="button"
+            >
+              <img src={STYLE_PREVIEW[id]} alt="" />
+              <div className="style-card__name">{STYLE_LABELS[id]}</div>
+              <div className="style-card__hint">{STYLE_HINTS[id]}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {error && <p style={{ color: "var(--neon-magenta)" }}>{error}</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

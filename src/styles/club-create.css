@@ -1,0 +1,48 @@
+/* Выбор стиля зала при создании клуба */
+
+.style-pick { margin: 14px 0 18px; }
+
+.style-pick__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.style-pick__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.style-card {
+  display: block;
+  padding: 0 0 9px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, .12);
+  background: rgba(15, 10, 28, .6);
+  color: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition: border-color .15s ease, transform .12s ease, box-shadow .15s ease;
+}
+.style-card:hover  { transform: translateY(-2px); }
+.style-card img    { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+
+.style-card__name {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 7px 9px 2px;
+}
+.style-card__hint {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-muted);
+  margin: 0 9px;
+}
+
+.style-card.is-active {
+  border-color: var(--neon-cyan, #4de2ff);
+  box-shadow: 0 0 14px rgba(77, 226, 255, .45);
+}
