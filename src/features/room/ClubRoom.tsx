@@ -20,6 +20,7 @@ import type { ClubberProfile } from "../../components/modals/ProfileModal";
 import type { ClubTrack } from "../../lib/music";
 import { genderFromVk, type ClubRole } from "../../config/frames";
 import { STYLE_TO_ROOM, type ClubStyle } from "../../config/clubTheme";
+import { useUi } from "../../store/uiStore";
 import { useClubMusic } from "./useClubMusic";
 
 const APP_URL = "https://vk.com/app54746228";
@@ -793,6 +794,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         coins={profile.coins}
         votes={(profile as any).votes ?? 0}
         track={track}
+        videoUrl={(session as any)?.track_video_url ?? null}
         reactions={uiReactions}
         dancers={dancers}
         dj={dj}
@@ -851,6 +853,15 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
                 onClick={switchMode}
               >
                 {mode === "radio" ? "📻" : "🎚"}
+              </button>
+            )}
+            {profile.vk_id === ADMIN_VK_ID && (
+              <button
+                className="btn-round"
+                title="Подгонка раскладки"
+                onClick={() => useUi.getState().toggleTuner()}
+              >
+                📐
               </button>
             )}
             {profile.vk_id === ADMIN_VK_ID && (
