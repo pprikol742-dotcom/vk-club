@@ -34,7 +34,8 @@ export function parseVideoUrl(raw: string): ClubVideo | null {
     return {
       provider: 'vk',
       url,
-      embed: `https://vk.com/video_ext.php?oid=${vk[1]}&id=${vk[2]}&hd=2`,
+      // hash обязателен для чужих видео; js_api разрешает управление из плеера
+      embed: `https://vk.com/video_ext.php?oid=${vk[1]}&id=${vk[2]}&hd=2&autoplay=1&js_api=1`,
     };
   }
 
