@@ -103,10 +103,10 @@ export function assignSlots<T extends { id: string }>(people: T[]) {
  * Всё остальное совпало с кэнди — лампы и колонки на тех же местах.
  */
 const DARK_TWEAKS = {
-  sign:       { left: '51.5%', top: '38.5%', width: '25%' },
+  sign:       { left: '53%',   top: '38.5%', width: '25%' },
   discoBall:  { left: '50%',   top: '4%' },
   djSlot:     { left: '50%',   top: '40%' },
-  videoScreen:{ left: '51.5%', top: '35%',   width: '28%' },
+  videoScreen:{ left: '53%',   top: '35%',   width: '28%' },
   giftSpot:   { left: '30%',   top: '64%' },
 };
 
