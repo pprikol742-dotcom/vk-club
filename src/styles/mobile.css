@@ -1,0 +1,79 @@
+/* ================= Телефон ================= */
+
+@media (max-width: 720px) {
+  .modal {
+    width: min(96vw, 460px) !important;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal__body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  .music__tabs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .music__tab  { flex: 0 0 auto; font-size: 12px; padding: 7px 12px; }
+
+  /* Строка трека: сверху название и время, снизу кнопки во всю ширину.
+     Иначе «Зарядить» уезжает за правый край экрана. */
+  .music__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+  }
+  .music__info { flex: 1 1 auto; min-width: 0; order: 1; }
+  .music__time { flex: 0 0 auto; order: 2; }
+  .music__artist, .music__title {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .music__row .music__load {
+    order: 3;
+    flex: 1 1 0;
+    min-width: 92px;
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+  .music__row .music__load--ghost,
+  .music__row .music__load--danger {
+    flex: 0 0 44px;
+    min-width: 44px;
+  }
+
+  .player {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    min-height: 76px;
+  }
+  .player__title { font-size: 13px; }
+
+  .style-pick__row { grid-template-columns: 1fr; }
+}
+
+/* ======= форма загрузки трека ======= */
+
+.music__field { display: block; margin-bottom: 12px; }
+.music__field > span {
+  display: block; font-size: 12px; font-weight: 700;
+  color: var(--text-muted); margin-bottom: 5px;
+}
+.music__field input {
+  width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(168, 85, 247, .35);
+  background: rgba(15, 10, 28, .7); color: #fff; font-size: 14px;
+}
+
+.music__file {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  padding: 14px; border-radius: 12px;
+  border: 1.5px dashed rgba(168, 85, 247, .55);
+  background: rgba(168, 85, 247, .08);
+  cursor: pointer; transition: background .15s ease;
+}
+.music__file:hover { background: rgba(168, 85, 247, .16); }
+.music__file input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.music__file-icon  { font-size: 24px; line-height: 1; }
+.music__file-text  { min-width: 0; }
+.music__file-title { font-size: 14px; font-weight: 700; }
+.music__file-sub {
+  font-size: 11px; color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

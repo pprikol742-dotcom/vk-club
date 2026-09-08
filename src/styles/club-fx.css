@@ -297,22 +297,53 @@
   100% { opacity: 0; transform: scaleX(-1) translateY(-4px) scale(.95) }
 }
 
-/* танцует только тот, кто поставил лайк: ровные прыжки без наклонов */
+/*
+ * Танцует только тот, кто поставил лайк.
+ * Движение мягкое: лёгкий подъём с покачиванием и чуть заметным
+ * приседанием на приземлении. Никаких рывков — кривая плавная,
+ * поэтому аватарка выглядит живой, а не дёргается по кадрам.
+ */
 .clubber-slot.is-dancing {
-  animation: dance 0.68s steps(1, end) infinite;
+  animation: dance 1.15s cubic-bezier(.37, 0, .63, 1) infinite;
+  will-change: transform;
 }
+
 @keyframes dance {
-  0%   { transform: translate(-50%,-50%) }
-  50%  { transform: translate(-50%,-62%) }
-  100% { transform: translate(-50%,-50%) }
+  0%   { transform: translate(-50%, -50%)   rotate(0deg)      scale(1, 1); }
+  18%  { transform: translate(-50%, -48%)   rotate(-1.5deg)   scale(1.03, .97); }
+  38%  { transform: translate(-50%, -59%)   rotate(-2.5deg)   scale(.98, 1.03); }
+  50%  { transform: translate(-50%, -60.5%) rotate(0deg)      scale(1, 1); }
+  62%  { transform: translate(-50%, -59%)   rotate(2.5deg)    scale(.98, 1.03); }
+  82%  { transform: translate(-50%, -48%)   rotate(1.5deg)    scale(1.03, .97); }
+  100% { transform: translate(-50%, -50%)   rotate(0deg)      scale(1, 1); }
+}
+
+/* диджей за пультом покачивается спокойнее — он же работает */
+.dj-slot.is-dancing {
+  animation: djDance 1.4s cubic-bezier(.37, 0, .63, 1) infinite;
+  will-change: transform;
+}
+
+@keyframes djDance {
+  0%   { transform: translate(-50%, -50%) rotate(0deg); }
+  25%  { transform: translate(-50%, -53%) rotate(-2deg); }
+  50%  { transform: translate(-50%, -50%) rotate(0deg); }
+  75%  { transform: translate(-50%, -53%) rotate(2deg); }
+  100% { transform: translate(-50%, -50%) rotate(0deg); }
+}
+
+/* появление аватарки в зале — мягкий вход, а не рывок */
+.clubber-slot {
+  animation: clubberIn .45s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes clubberIn {
+  from { opacity: 0; transform: translate(-50%, -38%) scale(.85); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .clubber-slot.is-dancing, .clubber__hand { animation: none }
+  .clubber-slot.is-dancing, .dj-slot.is-dancing, .clubber__hand { animation: none }
 }
-
-/* диджей за пультом тоже пляшет */
-.dj-slot.is-dancing { animation: dance 0.68s steps(1, end) infinite; }
 
 /* выход заблокирован, пока ты за пультом */
 .btn-exit--locked { filter: grayscale(.45); opacity: .8; }
