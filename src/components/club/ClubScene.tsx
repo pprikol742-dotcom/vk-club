@@ -156,6 +156,7 @@ export const ClubScene: React.FC<Props> = (p) => {
         {/* место диджея */}
         {p.dj ? (
           <div
+            data-vk={p.dj.id}
             className={
               'dj-slot' +
               (p.dancers?.has(p.dj.id) ? ' is-dancing' : '')

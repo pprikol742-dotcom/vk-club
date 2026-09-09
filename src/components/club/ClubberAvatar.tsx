@@ -47,6 +47,7 @@ export const ClubberAvatar: React.FC<Props> = ({
 
   return (
     <div
+      data-vk={clubber.id}
       className={
         'clubber-slot' +
         (open ? ' is-open' : '') +
