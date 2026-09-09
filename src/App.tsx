@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import "./styles/theme.css";
+import "./styles/premium.css";
 import { initVkBridge, getVkUserInfo, getLaunchParams } from "./lib/vkBridge";
 import { callEdgeFunction, supabase } from "./lib/supabase";
 import { useAppStore } from "./store/useAppStore";

@@ -1,0 +1,261 @@
+/* ============================================================
+   Player Club — общий стиль и типографика
+   Подключается последним, поэтому перекрывает старые правила.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* --- шрифты --- */
+  --font-display: 'Unbounded', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Manrope', -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* --- размеры: одна шкала на всю игру --- */
+  --fs-xs: 11px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+
+  /* --- поверхности: стекло вместо плоских плашек --- */
+  --surface-1: rgba(20, 12, 38, .78);
+  --surface-2: rgba(28, 18, 52, .88);
+  --surface-3: rgba(38, 25, 68, .95);
+  --hairline: rgba(255, 255, 255, .10);
+  --hairline-strong: rgba(255, 255, 255, .18);
+
+  /* --- акценты --- */
+  --accent: #a855f7;
+  --accent-soft: rgba(168, 85, 247, .22);
+  --accent-line: rgba(168, 85, 247, .45);
+  --accent-2: #33fff0;
+  --danger: #f87171;
+  --success: #4ade80;
+
+  /* --- тени: мягкие, многослойные --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, .38);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, .5);
+  --shadow-glow: 0 0 24px rgba(168, 85, 247, .35);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  --ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ---------- база ---------- */
+
+body,
+.club-page,
+.clublist-page {
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4,
+.modal__title,
+.clublist__head,
+.splash__logo-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* ---------- заголовки окон ---------- */
+
+.modal {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lg);
+  background: var(--surface-2);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.modal__head {
+  background: linear-gradient(135deg, rgba(168, 85, 247, .30), rgba(51, 255, 240, .16)) !important;
+  border-bottom: 1px solid var(--hairline);
+  padding: 15px 18px !important;
+}
+
+.modal__title {
+  font-size: var(--fs-lg);
+  text-transform: none;
+}
+
+.modal__body { padding: 16px 18px 18px !important; }
+
+/* ---------- кнопки ---------- */
+
+.btn-primary,
+.music__load,
+.neon-btn {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-line);
+  background: linear-gradient(180deg, rgba(168, 85, 247, .95), rgba(124, 58, 237, .95));
+  color: #fff;
+  padding: 10px 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform .12s var(--ease), box-shadow .18s var(--ease), filter .15s ease;
+}
+.btn-primary:hover,
+.music__load:hover,
+.neon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+  filter: brightness(1.06);
+}
+.btn-primary:active,
+.music__load:active,
+.neon-btn:active { transform: translateY(0) scale(.98); }
+
+.btn-primary:disabled,
+.music__load:disabled {
+  opacity: .45;
+  filter: grayscale(.4);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* круглые кнопки верхней панели */
+.btn-round {
+  border-radius: var(--radius-full);
+  border: 1px solid var(--hairline-strong);
+  background: linear-gradient(180deg, rgba(60, 38, 100, .92), rgba(34, 20, 60, .92));
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, .12);
+  transition: transform .12s var(--ease), box-shadow .18s var(--ease);
+}
+.btn-round:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), 0 0 16px var(--accent-soft);
+}
+.btn-round:active { transform: scale(.94); }
+.btn-round--off { filter: grayscale(.7); opacity: .6; }
+
+/* ---------- вкладки ---------- */
+
+.music__tab {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, .06);
+  color: var(--text-muted);
+  padding: 8px 14px;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.music__tab:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.music__tab.is-active {
+  background: linear-gradient(180deg, rgba(168, 85, 247, .95), rgba(124, 58, 237, .95));
+  border-color: var(--accent-line);
+  color: #fff;
+  box-shadow: 0 0 14px var(--accent-soft);
+}
+
+/* ---------- списки и карточки ---------- */
+
+.music__row,
+.club-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  transition: border-color .15s ease, transform .12s var(--ease), box-shadow .18s var(--ease);
+}
+.music__row:hover,
+.club-card:hover {
+  border-color: var(--accent-line);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.music__artist { font-size: var(--fs-sm); font-weight: 700; }
+.music__title  { font-size: var(--fs-xs); color: var(--text-muted); }
+.music__time   { font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+.club-card__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.clublist__head {
+  font-size: var(--fs-xl);
+  background: linear-gradient(135deg, var(--accent), #d946ef);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- поля ввода ---------- */
+
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+}
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- плеер ---------- */
+
+.player {
+  background: linear-gradient(180deg, rgba(18, 11, 34, .92), rgba(10, 6, 20, .97));
+  border-top: 1px solid var(--hairline);
+  backdrop-filter: blur(14px);
+}
+.player__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+.player__artist { font-size: var(--fs-xs); color: var(--text-muted); }
+
+.player__dj {
+  font-family: var(--font-display);
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md), 0 0 18px var(--accent-soft);
+}
+
+/* цифры счётчиков — моноширинные, чтобы не прыгали */
+.player__count,
+.coins,
+.music__time { font-variant-numeric: tabular-nums; }
+
+/* ---------- чат ---------- */
+
+.chat__msg { font-size: var(--fs-sm); line-height: 1.4; }
+.chat__from { font-weight: 700; font-size: var(--fs-xs); }
+
+/* ---------- аватарки: мягче рамка и тень ---------- */
+
+.clubber__photo,
+.dj-avatar {
+  border-radius: 12px;
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(255, 255, 255, .08);
+}
+
+/* ---------- прокрутка ---------- */
+
+* { scrollbar-width: thin; scrollbar-color: var(--accent-line) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--accent-line);
+  border-radius: var(--radius-full);
+}
+*::-webkit-scrollbar-track { background: transparent; }

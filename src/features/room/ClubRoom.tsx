@@ -242,6 +242,50 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   }, [trackKey, clearReactions]);
 
   /**
+   * Кто уже танцует под этот трек.
+   * Живые реакции ловят только тех, кто лайкнул при нас. Вошедший
+   * в середине сета их не слышал, поэтому список поднимаем из базы:
+   * все, кто проголосовал за текущий трек, уже на танцполе.
+   */
+  useEffect(() => {
+    if (!club?.id || !trackKey) return;
+    let cancelled = false;
+
+    (async () => {
+      const { data } = await supabase
+        .from("track_votes")
+        .select("vk_id, vote")
+        .eq("club_id", club.id)
+        .eq("started_at", trackKey);
+
+      if (cancelled || !data) return;
+
+      const ups = (data as any[])
+        .filter((v) => v.vote === "up")
+        .map((v) => String(v.vk_id));
+
+      if (!ups.length) return;
+
+      setDancers((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+        for (const id of ups) if (!next.has(id)) { next.add(id); changed = true; }
+        return changed ? next : prev;
+      });
+
+      // заодно вспоминаем свой голос, чтобы кнопки не разблокировались
+      if (profile) {
+        const mine = (data as any[]).find((v) => v.vk_id === profile.vk_id);
+        if (mine) setMyVote(mine.vote === "up" ? "up" : "down");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [club?.id, trackKey, profile]);
+
+  /**
    * Танцует только тот, кто поставил лайк текущему треку.
    * Хлопок руку поднимает, но танец не включает.
    */

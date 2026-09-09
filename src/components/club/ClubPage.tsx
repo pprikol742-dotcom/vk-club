@@ -19,6 +19,8 @@ import '../../styles/club-frames.css';
 import '../../styles/club-fx.css';
 import '../../styles/club-mode.css';
 import '../../styles/club-queue.css';
+import '../../styles/mobile.css';
+import '../../styles/premium.css';
 
 interface Props {
   roomId: RoomId;
