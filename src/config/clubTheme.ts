@@ -37,7 +37,7 @@ const BG = `${import.meta.env.BASE_URL}assets/bg/club_background.png`;
 const BG_DARK = `${import.meta.env.BASE_URL}assets/bg/club_background_dark.png`;
 
 export const ROOMS: Record<RoomId, RoomTheme> = {
-  neon:      { id: 'neon',      title: 'В Клубе',            background: BG, neon: '#c14bff', neonSoft: 'rgba(193,75,255,.45)', signColor: '#ff3ec8', signGlow: 'rgba(255,62,200,.85)' },
+  neon:      { id: 'neon',      title: 'Player Club',        background: BG, neon: '#c14bff', neonSoft: 'rgba(193,75,255,.45)', signColor: '#ff3ec8', signGlow: 'rgba(255,62,200,.85)' },
   disco8090: { id: 'disco8090', title: 'ДИСКО ХИТЫ 80-90',   background: BG, neon: '#b04cff', neonSoft: 'rgba(176,76,255,.45)', signColor: '#ff6ad5', signGlow: 'rgba(255,106,213,.8)' },
   dance:     { id: 'dance',     title: 'Dance Music Only',   background: BG, neon: '#00d8ff', neonSoft: 'rgba(0,216,255,.40)',  signColor: '#4de2ff', signGlow: 'rgba(77,226,255,.8)' },
   ivetta:    { id: 'ivetta',    title: 'Ivetta Club',        background: BG, neon: '#ff4bd8', neonSoft: 'rgba(255,75,216,.45)', signColor: '#ff8ae0', signGlow: 'rgba(255,138,224,.8)' },
@@ -54,7 +54,7 @@ export const LAYOUT = {
   topBadge:  { right: '0%',  top: '1.5%' },
 
   /** вывеска в неоновой рамке */
-  sign:       { left: '48.5%', top: '21%',   width: '32%' },
+  sign:       { left: '50%',   top: '21%',   width: '32%' },
   discoBall:  { left: '50.3%', top: '41%' },
   player:     { left: '0%',    top: '100%',  width: '99.5%' },
   djSlot:     { left: '50%',   top: '41.5%' },
@@ -103,7 +103,7 @@ export function assignSlots<T extends { id: string }>(people: T[]) {
  * Всё остальное совпало с кэнди — лампы и колонки на тех же местах.
  */
 const DARK_TWEAKS = {
-  sign:       { left: '50%',   top: '24.5%', width: '36%' },
+  sign:       { left: '50%',   top: '21%',   width: '32%' },
   discoBall:  { left: '50%',   top: '4%' },
   djSlot:     { left: '50%',   top: '41.5%' },
   djButton:   { left: '52%',   top: '97.5%' },
