@@ -95,7 +95,7 @@ export const QueueModal: React.FC<{
         <p className="modal__text">
           Твой трек будет играть примерно через {minutes} минут.<br />
           Но, если очень хочется, то можно не ждать!<br />
-          Встать в начало очереди стоит несколько монеток.
+          Встать в начало очереди стоит несколько клабсовок.
         </p>
         <div className="gift__price" style={{ justifyContent: 'center', marginTop: 16, fontSize: 16 }}>
           <span className="gift__coin" style={{ width: 18, height: 18 }} />
@@ -210,7 +210,7 @@ export const HelpModal: React.FC<{ onClose: () => void; groupUrl?: string }> = (
       <h4>Подарки и гарем</h4>
       <p>
         Подарки дарят диджею за сет и друг другу просто так. Игрока можно «перекупить» — стать
-        его хозяином, заплатив больше предыдущей ставки. Монеты прошлому хозяину не
+        его хозяином, заплатив больше предыдущей ставки. Клабсы прошлому хозяину не
         возвращаются, так что держись за своих.
       </p>
 
@@ -229,7 +229,7 @@ export const HelpModal: React.FC<{ onClose: () => void; groupUrl?: string }> = (
       </ul>
 
       {groupUrl && (
-        <p>Остались вопросы — заходи в паблик игры: <a href={groupUrl} target="_blank" rel="noreferrer">В Клубе</a></p>
+        <p>Остались вопросы — заходи в паблик игры: <a href={groupUrl} target="_blank" rel="noreferrer">Player Club</a></p>
       )}
     </div>
   </Modal>

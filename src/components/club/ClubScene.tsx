@@ -95,7 +95,7 @@ export const ClubScene: React.FC<Props> = (p) => {
           {p.extraButtons}
         </div>
 
-        {/* монеты */}
+        {/* клабсы */}
         <div className="coins" style={{ right: LAYOUT.coins.right, top: LAYOUT.coins.top }} onClick={p.onCoins}>
           <span className="coins__icon">▶</span>
           {Number.isFinite(p.coins) ? p.coins : '∞'}

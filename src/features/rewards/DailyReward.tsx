@@ -58,7 +58,7 @@ export function DailyReward() {
         ))}
       </div>
       <button className="neon-btn" disabled={claiming || alreadyClaimedToday} onClick={claim}>
-        {alreadyClaimedToday ? "Уже получено сегодня" : claiming ? "Получаю…" : "Забрать монеты"}
+        {alreadyClaimedToday ? "Уже получено сегодня" : claiming ? "Получаю…" : "Забрать клабсы"}
       </button>
       {error && <p style={{ color: "var(--neon-magenta)", fontSize: 13 }}>{error}</p>}
     </div>

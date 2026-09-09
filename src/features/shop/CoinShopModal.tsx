@@ -12,12 +12,12 @@ export interface CoinPack {
   best?: boolean;
 }
 
-/** Базовый курс: 50 монет за 5 голосов, дальше выгоднее. */
+/** Базовый курс: 200 клабсов за 10 голосов. Дальше пакет выгоднее. */
 export const COIN_PACKS: CoinPack[] = [
-  { id: 'coins_50',   coins: 50,   votes: 5 },
-  { id: 'coins_120',  coins: 120,  votes: 10 },
-  { id: 'coins_350',  coins: 350,  votes: 25, best: true },
-  { id: 'coins_800',  coins: 800,  votes: 50 },
+  { id: 'clubs_200',  coins: 200,  votes: 10 },
+  { id: 'clubs_440',  coins: 440,  votes: 20 },
+  { id: 'clubs_1200', coins: 1200, votes: 50, best: true },
+  { id: 'clubs_2600', coins: 2600, votes: 100 },
 ];
 
 export const CoinShopModal: React.FC<{
@@ -59,23 +59,23 @@ export const CoinShopModal: React.FC<{
       }
     } catch (e) {
       const err = e as any;
-      setError(err?.error_data?.error_msg ?? err?.message ?? 'Не удалось купить монеты');
+      setError(err?.error_data?.error_msg ?? err?.message ?? 'Не удалось купить клабсы');
     } finally {
       setBusy(null);
     }
   };
 
   return (
-    <Modal title="Монеты" onClose={onClose} width={430}>
+    <Modal title="Клабсы" onClose={onClose} width={430}>
       <div className="modal__body">
         <div className="shop__balance">
           <Icon className="shop__coin" src={ICONS.coin} fallback="🪙" />
-          У тебя <b>{unlimited ? '∞' : coins}</b> монет
+          У тебя <b>{unlimited ? '∞' : coins}</b> клабсов
         </div>
 
         {unlimited ? (
           <div className="modal__hint" style={{ textAlign: 'center' }}>
-            Монеты не кончаются — покупать ничего не нужно.
+            Клабсы не кончаются — покупать ничего не нужно.
           </div>
         ) : (
           <div className="shop__grid">

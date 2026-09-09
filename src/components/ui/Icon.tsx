@@ -9,7 +9,7 @@ export const ICONS = {
   coin: `${base}assets/shop/coin.png`,
 } as const;
 
-/** Пакеты монет: pack_1…pack_4 */
+/** Пакеты клабсов: pack_1…pack_4 */
 export const PACK_ICONS: Record<string, string> = {
   coins_50: `${base}assets/shop/pack_1.png`,
   coins_120: `${base}assets/shop/pack_2.png`,

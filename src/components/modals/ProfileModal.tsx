@@ -126,7 +126,7 @@ export const HaremModal: React.FC<{
         </div>
 
         <button className="btn-primary" disabled={coins < price} onClick={onConfirm}>Перекупить</button>
-        {coins < price && <div className="modal__hint">Не хватает монет — пополни в магазине</div>}
+        {coins < price && <div className="modal__hint">Не хватает клабсов — пополни в магазине</div>}
       </div>
     </div>
   </Modal>

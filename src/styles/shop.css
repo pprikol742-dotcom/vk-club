@@ -1,0 +1,118 @@
+/* Магазины: клабсы и скины рук */
+
+.coin-packs,
+.hand-shop__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.coin-pack,
+.hand-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px 13px;
+  border-radius: var(--radius-md, 14px);
+  border: 1px solid var(--hairline, rgba(255,255,255,.1));
+  background: linear-gradient(165deg, rgba(46, 30, 82, .85), rgba(24, 15, 46, .9));
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .14s ease, border-color .16s ease, box-shadow .2s ease;
+}
+
+.coin-pack::before,
+.hand-card::before {
+  content: '';
+  position: absolute;
+  inset: -40% 55% 55% -40%;
+  background: radial-gradient(circle, rgba(255,255,255,.14), transparent 65%);
+  pointer-events: none;
+}
+
+.coin-pack:hover,
+.hand-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-line, rgba(168,85,247,.45));
+  box-shadow: 0 10px 28px rgba(0,0,0,.45), 0 0 22px rgba(168,85,247,.28);
+}
+.coin-pack:active,
+.hand-card:active { transform: translateY(-1px) scale(.985); }
+
+.coin-pack img,
+.hand-card img {
+  width: 66px;
+  height: 66px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.5));
+}
+
+.coin-pack__amount {
+  font-family: var(--font-display, inherit);
+  font-size: 19px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #ffd76a, #ff9f4a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.coin-pack__unit { font-size: 11px; color: var(--text-muted, #a79fd1); margin-top: -4px; }
+.coin-pack__price {
+  margin-top: 4px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid var(--hairline, rgba(255,255,255,.12));
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.coin-pack--best { border-color: rgba(255, 190, 80, .55); }
+.coin-pack--best::after {
+  content: 'ВЫГОДНО';
+  position: absolute;
+  top: 9px;
+  right: -30px;
+  width: 110px;
+  transform: rotate(38deg);
+  text-align: center;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  padding: 3px 0;
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+  color: #1a1005;
+}
+
+.hand-card__name  { font-size: 13px; font-weight: 700; text-align: center; }
+.hand-card__state { font-size: 11px; color: var(--text-muted, #a79fd1); }
+
+.hand-card.is-equipped {
+  border-color: var(--success, #4ade80);
+  box-shadow: 0 0 18px rgba(74, 222, 128, .3);
+}
+.hand-card.is-equipped .hand-card__state { color: var(--success, #4ade80); font-weight: 700; }
+.hand-card.is-locked img { filter: grayscale(.75) brightness(.75); }
+
+.shop__balance {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 14px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(255, 190, 80, .1);
+  border: 1px solid rgba(255, 190, 80, .3);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 420px) {
+  .coin-packs, .hand-shop__grid { gap: 9px; }
+  .coin-pack, .hand-card { padding: 13px 8px 11px; }
+  .coin-pack img, .hand-card img { width: 54px; height: 54px; }
+}

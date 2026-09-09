@@ -31,7 +31,7 @@ export async function getGroupsToken(appId: number) {
 }
 
 /**
- * Оплата голосами ВК: подписка на emoji, покупка монет.
+ * Оплата голосами ВК: подписка на emoji, покупка клабсов.
  * item — строка, которую разберёт твой сервер в колбэке VK Pay.
  */
 export async function buyForVotes(item: string) {
