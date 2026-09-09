@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { TITLES, type TitleId } from '../../config/titles';
 import { frameOf, FRAME_TITLE, canGift, type ClubRole, type Gender } from '../../config/frames';
 import { Icon, ICONS } from '../ui/Icon';
@@ -35,9 +35,35 @@ interface Props {
 export const ClubberAvatar: React.FC<Props> = ({
   clubber, x, y, delay = 0, isSelf, reaction, dancing, onOpenProfile, onGift,
 }) => {
-  // на десктопе — ховер, на телефоне — тап по аватарке раскрывает иконки
+  // Короткое нажатие сразу открывает выбор подарков.
+  // Долгое (или правая кнопка) раскрывает обычное меню с профилем.
   const [open, setOpen] = useState(false);
+  const longPress = useRef<number | null>(null);
+  const wasLong = useRef(false);
   const frame = frameOf(clubber);
+
+  const startPress = () => {
+    wasLong.current = false;
+    longPress.current = window.setTimeout(() => {
+      wasLong.current = true;
+      setOpen(true);
+    }, 450);
+  };
+
+  const endPress = () => {
+    if (longPress.current !== null) {
+      clearTimeout(longPress.current);
+      longPress.current = null;
+    }
+  };
+
+  /** Тап по аватарке: подарок сразу, без промежуточного меню. */
+  const tap = () => {
+    endPress();
+    if (wasLong.current || open) return;
+    if (canGift(!!isSelf)) onGift(clubber.id);
+    else onOpenProfile(clubber.id);
+  };
 
   const hint = [
     clubber.name,
@@ -55,7 +81,11 @@ export const ClubberAvatar: React.FC<Props> = ({
       }
       style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${delay}s` }}
       title={hint}
-      onMouseLeave={() => setOpen(false)}
+      onMouseLeave={() => { setOpen(false); endPress(); }}
+      onPointerDown={startPress}
+      onPointerUp={tap}
+      onPointerCancel={endPress}
+      onContextMenu={(e) => { e.preventDefault(); setOpen(true); }}
     >
       {clubber.title && <span className="clubber__crown">{TITLES[clubber.title].icon}</span>}
 
@@ -77,12 +107,10 @@ export const ClubberAvatar: React.FC<Props> = ({
           className={`clubber clubber--${frame}`}
           src={clubber.photo}
           alt={clubber.name}
-          onClick={() => setOpen((s) => !s)}
         />
       ) : (
         <div
           className={`clubber clubber--${frame} clubber--letter`}
-          onClick={() => setOpen((s) => !s)}
         >
           {clubber.name.trim().charAt(0).toUpperCase() || '?'}
         </div>
