@@ -10,8 +10,8 @@ const SPLATTER_GIFT_IDS = new Set(["rotten_tomato", "egg"]);
 const THROWN_GIFT_IDS = new Set(["rotten_tomato", "egg", "snowball"]);
 
 /** Сколько подарок летит и сколько потом лежит рядом с получателем. */
-const FLY_MS = 900;
-const LIFE_MS = 60_000;
+const FLY_MS = 2400;
+const LIFE_MS = 150_000;
 
 type Point = { x: number; y: number };
 
@@ -33,7 +33,8 @@ function findPoint(root: HTMLElement, vkId: number | null | undefined): Point | 
 }
 
 function FlyingGift(
-  { gift, root, djId }: { gift: GiftEvent; root: HTMLElement | null; djId?: number | null },
+  { gift, root, djId, slot, toDj }:
+  { gift: GiftEvent; root: HTMLElement | null; djId?: number | null; slot: number; toDj: boolean },
 ) {
   const iconUrl = giftIconUrl(gift.gift_id);
   const [from, setFrom] = useState<Point | null>(null);
@@ -47,10 +48,19 @@ function FlyingGift(
     const target = gift.to_vk_id ?? djId ?? null;
     const b = findPoint(root, target);
 
-    // если цели в зале нет, кладём подарок к пульту, а не к дарителю
-    setTo(b ?? { x: root.clientWidth / 2, y: root.clientHeight * 0.42 });
+    /**
+     * Подарки не сваливаются в одну точку: каждый следующий ложится
+     * рядом с предыдущим. Угощение диджею выкладывается справа от него,
+     * как на барной стойке, остальным — веером над головой.
+     */
+    const base = b ?? { x: root.clientWidth / 2, y: root.clientHeight * 0.42 };
+    const shift = toDj
+      ? { x: 34 + slot * 26, y: 6 + (slot % 2) * 10 }
+      : { x: (slot % 2 ? 1 : -1) * (14 + Math.floor(slot / 2) * 20), y: -slot * 7 };
+
+    setTo({ x: base.x + shift.x, y: base.y + shift.y });
     setFrom(a ?? null);
-  }, [root, gift.from_vk_id, gift.to_vk_id, djId]);
+  }, [root, gift.from_vk_id, gift.to_vk_id, djId, slot, toDj]);
 
   useEffect(() => {
     const t = setTimeout(() => setLanded(true), FLY_MS);
@@ -137,11 +147,26 @@ export function GiftFxLayer(
 
   useEffect(() => setRoot(ref.current), []);
 
+  // считаем, какой по счёту подарок лёг на каждого игрока
+  const slots = new Map<string, number>();
+
   return (
     <div ref={ref} className="gift-layer">
-      {gifts.map((g) => (
-        <FlyingGift key={g.id} gift={g} root={root} djId={djId} />
-      ))}
+      {gifts.map((g) => {
+        const target = String(g.to_vk_id ?? djId ?? "dj");
+        const slot = slots.get(target) ?? 0;
+        slots.set(target, slot + 1);
+        return (
+          <FlyingGift
+            key={g.id}
+            gift={g}
+            root={root}
+            djId={djId}
+            slot={slot}
+            toDj={g.to_vk_id == null}
+          />
+        );
+      })}
     </div>
   );
 }

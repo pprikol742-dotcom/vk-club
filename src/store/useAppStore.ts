@@ -26,7 +26,8 @@ interface AppState {
   removeActiveGift: (id: string) => void;
 }
 
-const GIFT_LIFETIME_MS = 60_000;
+/** Подарок лежит в зале две с половиной минуты. */
+const GIFT_LIFETIME_MS = 150_000;
 
 export const useAppStore = create<AppState>((set) => ({
   profile: null,
@@ -67,7 +68,7 @@ export const useAppStore = create<AppState>((set) => ({
     set((s) => (s.profile ? { profile: { ...s.profile, coins: s.profile.coins + delta } } : {})),
   addActiveGift: (g) => {
     set((s) => ({ activeGifts: [...s.activeGifts, g] }));
-    // подарок сам себя убирает максимум через минуту — не нужно хранить историю в UI
+    // подарок сам себя убирает через две с половиной минуты
     setTimeout(() => {
       set((s) => ({ activeGifts: s.activeGifts.filter((x) => x.id !== g.id) }));
     }, GIFT_LIFETIME_MS);
