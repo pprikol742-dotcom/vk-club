@@ -927,7 +927,7 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         overlay={
           <>
             {resonanceActive && <div className="resonance-flash" />}
-            <GiftFxLayer gifts={activeGifts} />
+            <GiftFxLayer gifts={activeGifts} djId={djVkId} />
           </>
         }
       />

@@ -32,7 +32,9 @@ function findPoint(root: HTMLElement, vkId: number | null | undefined): Point | 
   };
 }
 
-function FlyingGift({ gift, root }: { gift: GiftEvent; root: HTMLElement | null }) {
+function FlyingGift(
+  { gift, root, djId }: { gift: GiftEvent; root: HTMLElement | null; djId?: number | null },
+) {
   const iconUrl = giftIconUrl(gift.gift_id);
   const [from, setFrom] = useState<Point | null>(null);
   const [to, setTo] = useState<Point | null>(null);
@@ -41,12 +43,14 @@ function FlyingGift({ gift, root }: { gift: GiftEvent; root: HTMLElement | null 
   useLayoutEffect(() => {
     if (!root) return;
     const a = findPoint(root, gift.from_vk_id);
-    const b = findPoint(root, gift.to_vk_id);
+    // пустой получатель — значит угощают диджея за пультом
+    const target = gift.to_vk_id ?? djId ?? null;
+    const b = findPoint(root, target);
 
-    // Если кого-то из двоих в зале нет, подарок просто появляется у цели.
-    setTo(b ?? a ?? { x: root.clientWidth / 2, y: root.clientHeight * 0.55 });
+    // если цели в зале нет, кладём подарок к пульту, а не к дарителю
+    setTo(b ?? { x: root.clientWidth / 2, y: root.clientHeight * 0.42 });
     setFrom(a ?? null);
-  }, [root, gift.from_vk_id, gift.to_vk_id]);
+  }, [root, gift.from_vk_id, gift.to_vk_id, djId]);
 
   useEffect(() => {
     const t = setTimeout(() => setLanded(true), FLY_MS);
@@ -125,7 +129,9 @@ function FlyingGift({ gift, root }: { gift: GiftEvent; root: HTMLElement | null 
  * Подарки летят от дарителя к получателю и остаются лежать рядом.
  * Через минуту тают — время жизни задаёт стор, здесь только плавное угасание.
  */
-export function GiftFxLayer({ gifts }: { gifts: GiftEvent[] }) {
+export function GiftFxLayer(
+  { gifts, djId }: { gifts: GiftEvent[]; djId?: number | null },
+) {
   const ref = useRef<HTMLDivElement>(null);
   const [root, setRoot] = useState<HTMLElement | null>(null);
 
@@ -134,7 +140,7 @@ export function GiftFxLayer({ gifts }: { gifts: GiftEvent[] }) {
   return (
     <div ref={ref} className="gift-layer">
       {gifts.map((g) => (
-        <FlyingGift key={g.id} gift={g} root={root} />
+        <FlyingGift key={g.id} gift={g} root={root} djId={djId} />
       ))}
     </div>
   );
