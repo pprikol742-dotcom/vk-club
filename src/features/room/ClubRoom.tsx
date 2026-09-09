@@ -29,30 +29,9 @@ const APP_ID = 54746228;
 /** Автор игры: только у него есть тумблер защиты гарема. */
 const ADMIN_VK_ID = 1092428497;
 
-/** Подарки клабберу и диджею — иконки берём из твоего giftIcons. */
+/** Подарки читаем из каталога в базе, чтобы менять их без пересборки. */
 const withIcons = (list: Array<{ id: string; name: string; price: number }>): GiftItem[] =>
   list.map((g) => ({ ...g, icon: giftIconUrl(g.id) ?? undefined }));
-
-const PLAYER_GIFTS = withIcons([
-  { id: "ice_cream", name: "Мороженое", price: 5 },
-  { id: "chocolate", name: "Конфета", price: 5 },
-  { id: "raspberry", name: "Малинка", price: 4 },
-  { id: "kiss", name: "Поцелуй", price: 5 },
-  { id: "heart", name: "Сердечко", price: 5 },
-  { id: "snowball", name: "Снежок", price: 3 },
-  { id: "rotten_tomato", name: "Помидор", price: 3 },
-  { id: "egg", name: "Яйцо", price: 3 },
-]);
-
-const DJ_GIFTS = withIcons([
-  { id: "cigar", name: "Сигара", price: 7 },
-  { id: "hookah", name: "Кальян", price: 7 },
-  { id: "wine_glass", name: "Вино", price: 5 },
-  { id: "cognac_glass", name: "Коньяк", price: 6 },
-  { id: "beer_bottle", name: "Пиво", price: 5 },
-  { id: "coffee", name: "Кофе", price: 4 },
-  { id: "chifir", name: "Чифир", price: 6 },
-]);
 
 type SideModal = "hands" | "decorate" | "leaderboard" | null;
 
@@ -78,6 +57,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
   const [savingWelcome, setSavingWelcome] = useState(false);
   const [openedProfile, setOpenedProfile] = useState<ClubberProfile | null>(null);
   const [tick, setTick] = useState(0);
+  const [playerGifts, setPlayerGifts] = useState<GiftItem[]>([]);
+  const [djGifts, setDjGifts] = useState<GiftItem[]>([]);
   /** моё место в очереди диджеев, null — не в очереди */
   const [queuePos, setQueuePos] = useState<number | null>(null);
   /** кто танцует под текущий трек: лайкнул — танцует до конца */
@@ -303,6 +284,26 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
       return changed ? next : prev;
     });
   }, [reactions, trackKey]);
+
+  /** Каталог подарков: цены и состав меняются прямо в базе. */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("gifts_catalog")
+        .select("id, name, price, category")
+        .order("price", { ascending: true });
+
+      if (cancelled || !data) return;
+
+      const rows = data as Array<{ id: string; name: string; price: number; category: string }>;
+      setPlayerGifts(withIcons(rows.filter((g) => g.category !== "dj")));
+      setDjGifts(withIcons(rows.filter((g) => g.category === "dj")));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /** секундный тик — полоса трека и проверка конца сета */
   useEffect(() => {
@@ -852,8 +853,8 @@ export function ClubRoom({ onLeaveClub }: { onLeaveClub?: () => void } = {}) {
         emojiPrice={5}
         openedProfile={openedProfile}
         savingWelcome={savingWelcome}
-        djGifts={DJ_GIFTS}
-        playerGifts={PLAYER_GIFTS}
+        djGifts={djGifts}
+        playerGifts={playerGifts}
         giftBusy={giftBusy}
         onExit={exitClub}
         onBecomeDj={() => setPickerOpen(true)}
